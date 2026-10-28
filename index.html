@@ -1,0 +1,1266 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Unser Haushaltsbuch</title>
+<meta name="description" content="Haushaltsbuch: Zahlungen, Fixkosten, Wochenbudget und Monatsplan. Alle Daten bleiben auf diesem Gerät.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#2b6a5e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Haushalt">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: eine schmale Handy-Spalte, Reiter als Chips, Karten nur für echte Einheiten (Zahlungen, Budgets, Plan) */
+:root {
+  --bg: #f1f3ee;
+  --surface: #ffffff;
+  --sunk: #f4f5f1;
+  --ink: #16302a;
+  --muted: #64716c;
+  --line: #e1e5de;
+  --accent: #2b6a5e;
+  --accent-soft: #e4eee9;
+  --on-accent: #ffffff;
+  --danger: #b0472d;
+  --danger-soft: #f8e9e4;
+  --ok: #2d7a4c;
+  --bar-a: #a9c3bb;
+  --warn-bg: #fbf0e0;
+  --warn-ink: #85561a;
+  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Figtree", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --r: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1513; --surface: #15201d; --sunk: #1a2724; --ink: #e6eeeb; --muted: #97a6a0;
+    --line: #26342f; --accent: #74bcac; --accent-soft: #1b302a; --on-accent: #0e1513;
+    --danger: #e58b70; --danger-soft: #3a211b; --ok: #74c695; --bar-a: #3c5a52; --warn-bg: #33281a; --warn-ink: #e8bf86; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1513; --surface: #15201d; --sunk: #1a2724; --ink: #e6eeeb; --muted: #97a6a0;
+  --line: #26342f; --accent: #74bcac; --accent-soft: #1b302a; --on-accent: #0e1513;
+  --danger: #e58b70; --danger-soft: #3a211b; --ok: #74c695; --bar-a: #3c5a52; --warn-bg: #33281a; --warn-ink: #e8bf86; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; color-scheme: light; }
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; }
+img { max-width: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.45; }
+.wrap { max-width: 600px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 18px 40px; display: flex; flex-direction: column; gap: 18px; }
+.num, .amt { font-variant-numeric: tabular-nums; }
+h1, h2, h3 { font-family: var(--font-display); margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h1 { font-size: clamp(30px, 8vw, 40px); line-height: 1.05; }
+h2 { font-size: 21px; }
+h3 { font-size: 17px; }
+p { margin: 0; }
+.muted { color: var(--muted); }
+.small { font-size: 14px; }
+.danger { color: var(--danger); }
+.ok { color: var(--ok); }
+
+/* Kopf */
+.head { display: flex; align-items: center; gap: 14px; }
+.mark { width: 48px; height: 48px; border-radius: 13px; background: var(--accent); color: var(--on-accent); display: grid; place-items: center; font-family: var(--font-display); font-weight: 700; font-size: 18px; flex: none; }
+.head .t { min-width: 0; }
+.head h2 { font-size: 22px; }
+nav.tabs { display: flex; flex-wrap: wrap; gap: 4px 6px; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+nav.tabs a { text-decoration: none; color: var(--muted); padding: 8px 12px; border-radius: 10px; font-weight: 500; font-size: 16px; }
+nav.tabs a[aria-current="page"] { background: var(--accent-soft); color: var(--accent); }
+nav.tabs a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.bar-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.who { display: flex; align-items: center; gap: 10px; }
+.sync { font-size: 14px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+.sync::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.sync[data-s="ok"]::before { background: var(--ok); }
+.sync[data-s="err"] { color: var(--danger); }
+.sync[data-s="err"]::before { background: var(--danger); }
+
+/* Formulare */
+label.f { display: flex; flex-direction: column; gap: 6px; font-size: 15px; color: var(--ink); min-width: 0; }
+input[type="text"], input[type="date"], input[type="number"], input:not([type]), select {
+  font: inherit; font-size: 17px; color: var(--ink); background: var(--sunk); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; width: 100%; min-width: 0;
+}
+input.amt-in { text-align: right; }
+select.mini { width: auto; padding: 8px 32px 8px 12px; font-size: 16px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 380px) { .grid2 { grid-template-columns: 1fr; } }
+.check { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.check input { width: 24px; height: 24px; accent-color: var(--accent); flex: none; margin: 0; }
+
+/* Knöpfe */
+button { font: inherit; cursor: pointer; }
+.btn { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 12px; padding: 11px 16px; font-weight: 500; font-size: 16px; }
+.btn.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.btn.wide { width: 100%; padding: 15px; font-size: 18px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.btn.danger-btn { color: var(--danger); border-color: var(--danger); background: transparent; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.link { background: none; border: 0; padding: 0; color: var(--accent); font-weight: 600; font-size: 16px; display: inline-flex; gap: 6px; align-items: center; text-decoration: none; }
+.chip { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; font-size: 14px; color: var(--accent); background: var(--surface); }
+.chip.on { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.chip.warn { color: var(--danger); border-color: var(--danger); }
+.btn-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+
+/* Karten & Listen */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.card.hl { border-color: var(--accent); }
+.card-h { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.rows { display: flex; flex-direction: column; }
+.row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); min-width: 0; }
+.rows > .row:first-child { border-top: 0; padding-top: 2px; }
+.row .l { min-width: 0; flex: 1; display: flex; gap: 12px; align-items: center; }
+.row .l .tx { min-width: 0; }
+.row .tt { font-weight: 600; overflow-wrap: anywhere; }
+.row .sub { font-size: 14px; color: var(--muted); }
+.row .r { text-align: right; flex: none; }
+.row.done .tt { text-decoration: line-through; color: var(--muted); }
+.row.tap { cursor: pointer; }
+.kv { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; }
+.kv .k { color: var(--muted); }
+.kv.total { border-top: 1px solid var(--line); padding-top: 12px; margin-top: 4px; font-weight: 700; }
+.kv.total .k { color: var(--ink); }
+.big { font-family: var(--font-display); font-size: clamp(40px, 12vw, 56px); line-height: 1; color: var(--accent); font-weight: 700; }
+.big small { font-family: var(--font-body); font-size: 16px; color: var(--muted); font-weight: 400; }
+.stats3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.stats3 > div { min-width: 0; }
+.stats3 .n { font-family: var(--font-display); font-size: clamp(17px, 5vw, 26px); font-weight: 700; white-space: nowrap; }
+@media (max-width: 480px) {
+  .stats3 { grid-template-columns: 1fr; gap: 0; }
+  .stats3 > div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); }
+  .stats3 > div:first-child { border-top: 0; }
+  .stats3 .n { font-size: 20px; }
+}
+.prog { height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.prog > i { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
+.prog.over > i { background: var(--danger); }
+.split { display: flex; height: 10px; border-radius: 99px; overflow: hidden; gap: 3px; }
+.split i:first-child { background: var(--bar-a); }
+.split i:last-child { background: var(--accent); }
+.budget { display: flex; flex-direction: column; gap: 8px; padding: 14px 0; border-top: 1px solid var(--line); }
+.budget:first-of-type { border-top: 0; padding-top: 0; }
+.budget .top { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.budget .top .name { font-weight: 600; }
+.budget .inp { display: flex; align-items: center; gap: 8px; }
+.budget .inp input { width: 130px; }
+.week { padding: 14px; border-radius: 12px; display: flex; justify-content: space-between; gap: 12px; }
+.week.now { background: var(--accent-soft); }
+.week .wn { font-family: var(--font-display); font-weight: 700; font-size: 18px; }
+.week > div:first-child { flex: 1; }
+.week .wa { font-family: var(--font-display); font-weight: 700; font-size: 20px; white-space: nowrap; }
+.weeks { display: flex; flex-direction: column; gap: 2px; }
+.weeks .week + .week:not(.now) { border-top: 1px solid var(--line); border-radius: 0; }
+.empty { padding: 18px; border: 1px dashed var(--line); border-radius: 12px; color: var(--muted); text-align: center; }
+.banner { padding: 14px 16px; border-radius: 12px; background: var(--danger-soft); color: var(--ink); font-size: 15px; }
+.banner.info { background: var(--accent-soft); }
+.banner.warn { background: var(--warn-bg); color: var(--warn-ink); display: flex; gap: 10px; align-items: flex-start; }
+.banner.warn svg { flex: none; margin-top: 2px; }
+.eyebrow { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.hero-n { font-family: var(--font-display); font-size: clamp(36px, 11vw, 52px); font-weight: 700; line-height: 1.08; }
+.hero-n.acc { color: var(--accent); }
+.btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.btn-grid .btn { display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; padding: 14px; font-size: 17px; }
+.btn-grid .full { grid-column: 1 / -1; }
+.cb { width: 24px; height: 24px; accent-color: var(--accent); flex: none; margin: 0; }
+.cb-leer { width: 24px; flex: none; }
+.fix-sum { display: flex; flex-direction: column; }
+.fix-sum > div { padding: 12px 0; border-top: 1px solid var(--line); }
+.fix-sum > div:first-child { border-top: 0; padding-top: 0; }
+.fix-sum .n { font-family: var(--font-display); font-size: 30px; font-weight: 700; }
+.vh { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; pointer-events: none; }
+.foto-btn { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.hbars { display: flex; flex-direction: column; gap: 10px; }
+.hbar { display: grid; grid-template-columns: minmax(0, 7.5em) 1fr auto; gap: 10px; align-items: center; font-size: 15px; }
+.hbar .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hbar .prog { height: 10px; }
+.warn-text { color: var(--warn-ink); }
+.q-status { font-size: 14px; color: var(--muted); }
+.q-status.laeuft::before { content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 8px; border-radius: 50%; border: 2px solid var(--accent); border-right-color: transparent; vertical-align: -1px; }
+@media (prefers-reduced-motion: no-preference) { .q-status.laeuft::before { animation: dreh .8s linear infinite; } @keyframes dreh { to { transform: rotate(360deg); } } }
+details.how summary { color: var(--accent); font-weight: 600; cursor: pointer; }
+details.how .kv { font-size: 15px; }
+.foot { display: flex; justify-content: space-between; gap: 10px; color: var(--muted); font-size: 14px; flex-wrap: wrap; }
+.tag { font-size: 13px; padding: 2px 8px; border-radius: 6px; background: var(--sunk); color: var(--muted); white-space: nowrap; }
+.months { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* Blatt (Eingabefenster) */
+.veil { position: fixed; inset: 0; background: rgba(10, 20, 17, .45); z-index: 30; display: flex; align-items: flex-end; justify-content: center; }
+.sheet { background: var(--surface); width: 100%; max-width: 600px; max-height: 92vh; overflow-y: auto; border-radius: 18px 18px 0 0; padding: 20px max(18px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px)); display: flex; flex-direction: column; gap: 14px; }
+@media (min-width: 640px) { .veil { align-items: center; } .sheet { border-radius: 18px; } }
+.seg { display: flex; gap: 6px; flex-wrap: wrap; }
+.seg button { border: 1px solid var(--line); background: var(--sunk); color: var(--ink); border-radius: 10px; padding: 9px 14px; font-size: 16px; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 12px 18px; border-radius: 12px; z-index: 40; font-size: 15px; max-width: calc(100% - 32px); }
+@media (prefers-reduced-motion: no-preference) { .sheet { animation: up .18s ease-out; } @keyframes up { from { transform: translateY(16px); opacity: .6; } } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="head">
+    <div class="mark" id="mark">a.</div>
+    <div class="t"><h2>Unser Haushaltsbuch</h2><p class="muted" id="paar">Gemeinsam</p></div>
+  </header>
+  <nav class="tabs" id="tabs" aria-label="Bereiche">
+    <a href="#uebersicht">Übersicht</a><a href="#monate">Monate</a><a href="#zahlungen">Zahlungen</a><a href="#fixkosten">Fixkosten</a><a href="#budgets">Budgets</a><a href="#verlauf">Verlauf</a><a href="#einstellungen">Einstellungen</a>
+  </nav>
+  <div class="bar-row">
+    <label class="who" for="von-wahl"><span>Erfasst von</span>
+      <select id="von-wahl" class="mini"><option value="p1">Person 1</option><option value="p2">Person 2</option></select>
+    </label>
+    <span class="sync" id="sync">Lade …</span>
+  </div>
+  <main id="main" style="display:flex;flex-direction:column;gap:18px">
+    <div class="card"><h3>Haushaltsbuch wird geladen …</h3><p class="muted">Hier erscheinen gleich eure Zahlungen, Einnahmen, Budgets und der Monatsplan.</p>
+      <noscript><div class="banner">JavaScript ist ausgeschaltet. Bitte die Seite in Safari oder Chrome öffnen.</div></noscript></div>
+  </main>
+  <footer class="foot"><span>Gespeichert nur auf diesem Gerät</span><span id="gespeichert">—</span></footer>
+</div>
+<div id="veil" class="veil" hidden></div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+'use strict';
+/* ───────── Grundwerte ───────── */
+const TABS = ['uebersicht','monate','zahlungen','fixkosten','budgets','verlauf','einstellungen'];
+const KATEGORIEN = ['Wohnen','Energie','Versicherung','Mobilität','Kredit','Handy & Internet','Abos','Sonstiges'];
+const RHYTHMUS = { 1: 'monatlich', 2: 'alle 2 Monate', 3: 'alle 3 Monate', 6: 'halbjährlich', 12: 'jährlich' };
+const STD_BEREICHE = [
+  { id: 'lebensmittel', name: 'Lebensmittel & Haushalt', ausWoche: true, budget: 0, pos: 1 },
+  { id: 'sonstiges', name: 'Sonstiges / Puffer', budget: 0, pos: 2 },
+];
+const S = {
+  db: null, user: null, downloads: null,
+  verfuegbar: null,           // null = noch unklar, false = kein Speicher in dieser Ansicht
+  nurLesen: false,
+  einst: null, buchungen: [], fix: [], bereiche: [], zyklen: [],
+  geladen: { einst: false, buchungen: false, fix: false, bereiche: false, zyklen: false },
+  mitErwartet: true, monat: null, renderOffen: false,
+  sample: null, bildOk: false, bildTypen: 'image/*',
+  schnell: null, offenerBereich: null, importVorschau: null, importFehler: '',
+};
+const schnellLeer = () => ({ betrag: '', titel: '', bereich: 'lebensmittel', quelle: 'konto', datum: null, status: '', laeuft: false });
+S.schnell = schnellLeer();
+
+/* ───────── Helfer ───────── */
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const EUR = new Intl.NumberFormat('de-AT', { style: 'currency', currency: 'EUR' });
+const r2 = n => Math.round((Number(n) || 0) * 100) / 100;
+const eur = n => EUR.format(Math.abs(r2(n))).replace('-', '');
+const eurS = n => (r2(n) < 0 ? '− ' : '') + eur(n);
+const eurOderStrich = n => (n == null || !isFinite(n)) ? '—' : eurS(n);
+const summe = (arr, f = b => b.betrag) => r2(arr.reduce((s, x) => s + (Number(f(x)) || 0), 0));
+function parseEuro(s) {
+  if (s == null) return NaN;
+  let t = String(s).replace(/[€\s]/g, '').replace('−', '-');
+  if (!t) return NaN;
+  if (t.includes(',')) t = t.replace(/\./g, '').replace(',', '.');
+  const n = Number(t);
+  return isFinite(n) ? r2(n) : NaN;
+}
+const amtIn = n => (n == null || n === '') ? '' : String(r2(n)).replace('.', ',');
+function lsGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); } catch {} }
+
+/* Datum: immer lokale Kalendertage als 'JJJJ-MM-TT' */
+const pad = n => String(n).padStart(2, '0');
+const isoTag = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const ausIso = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d, 12); };
+const heute = () => isoTag(new Date());
+const plusTage = (s, n) => { const d = ausIso(s); d.setDate(d.getDate() + n); return isoTag(d); };
+const tageZwischen = (a, b) => Math.round((ausIso(b) - ausIso(a)) / 86400000);
+const tm = s => s ? `${s.slice(8, 10)}.${s.slice(5, 7)}.` : '—';
+const tmj = s => s ? `${s.slice(8, 10)}.${s.slice(5, 7)}.${s.slice(0, 4)}` : '—';
+const MONATE = ['Jänner','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+const monatName = ym => `${MONATE[Number(ym.slice(5, 7)) - 1]} ${ym.slice(0, 4)}`;
+const MONAT_RE = new RegExp('\\b(' + [...MONATE, 'Januar', 'Feber'].join('|') + ')\\b', 'g');
+function plusMonat(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  const ny = m === 12 ? y + 1 : y, nm = m === 12 ? 1 : m + 1;
+  return `${ny}-${pad(nm)}-${pad(Math.min(d, tageImMonat(ny, nm)))}`;
+}
+const tageImMonat = (y, m) => new Date(y, m, 0).getDate();
+function zeitpunkt(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}., ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function faellig(datum) {
+  const t = tageZwischen(heute(), datum);
+  if (t === 0) return 'heute';
+  if (t === 1) return 'morgen';
+  if (t > 1) return `in ${t} Tagen`;
+  return t === -1 ? 'seit gestern fällig' : `seit ${-t} Tagen fällig`;
+}
+
+/* ───────── Einstellungen mit Standardwerten ───────── */
+function einst() {
+  const e = S.einst || {};
+  const von = e.zyklus?.von || heute();
+  let bis = e.zyklus?.bis;
+  if (!bis) { const d = ausIso(von); d.setMonth(d.getMonth() + 1); d.setDate(d.getDate() - 1); bis = isoTag(d); }
+  return {
+    namen: { p1: e.namen?.p1 || 'Person 1', p2: e.namen?.p2 || 'Person 2' },
+    zyklus: { von, bis },
+    sparziel: Number(e.sparziel) || 0,
+    gespartVorher: Number(e.gespartVorher) || 0,
+    sparbetrag: Number(e.sparbetrag) || 0,
+    sparUeberwiesen: !!e.sparUeberwiesen,
+    sparAm: e.sparAm || null,
+    wochenbudget: Number(e.wochenbudget) || 0,
+    abgleich: e.abgleich || null,
+    letzteSicherung: e.letzteSicherung || null,
+  };
+}
+function bereiche() {
+  const map = new Map(STD_BEREICHE.map(b => [b.id, { ...b }]));
+  for (const b of S.bereiche) map.set(b.id, { ...(map.get(b.id) || {}), ...b });
+  return [...map.values()].filter(b => !b.geloescht).sort((a, b) => (a.pos ?? 99) - (b.pos ?? 99));
+}
+
+/* ───────── Wochen im Zyklus (Mo–So, an den Zyklus geschnitten) ───────── */
+function wochen(E) {
+  const out = []; let start = E.zyklus.von; let nr = 1;
+  if (E.zyklus.bis < start) return out;
+  while (start <= E.zyklus.bis) {
+    const wt = ausIso(start).getDay();             // 0 = Sonntag
+    let ende = plusTage(start, wt === 0 ? 0 : 7 - wt);
+    if (ende > E.zyklus.bis) ende = E.zyklus.bis;
+    const tage = tageZwischen(start, ende) + 1;
+    out.push({ nr: nr++, von: start, bis: ende, tage, betrag: r2(E.wochenbudget * tage / 7) });
+    start = plusTage(ende, 1);
+    if (nr > 60) break;
+  }
+  return out;
+}
+
+/* ───────── Die eine Rechnung, aus der alle Ansichten lesen ───────── */
+function rechnen() {
+  const E = einst(); const z = E.zyklus;
+  const inZ = b => b.datum >= z.von && b.datum <= z.bis;
+  const ein = S.buchungen.filter(b => b.art === 'einnahme' && inZ(b));
+  const zah = S.buchungen.filter(b => b.art === 'zahlung' && inZ(b));
+  const aus = S.buchungen.filter(b => b.art === 'ausgabe' && inZ(b));
+  const R = {
+    E, ein, zah, aus,
+    einGesamt: summe(ein), einErhalten: summe(ein.filter(b => b.erledigt)),
+    zahGesamt: summe(zah), zahBezahlt: summe(zah.filter(b => b.erledigt)),
+    alltag: summe(aus),
+    spar: r2(E.sparbetrag), sparErledigt: E.sparUeberwiesen ? r2(E.sparbetrag) : 0,
+  };
+  R.einOffen = r2(R.einGesamt - R.einErhalten);
+  R.zahOffen = r2(R.zahGesamt - R.zahBezahlt);
+  R.sparOffen = r2(R.spar - R.sparErledigt);
+
+  // Konto & Bargeld jetzt = letzter Abgleich + alles, was danach erledigt wurde
+  R.konto = null; R.bar = null; R.jetzt = null;
+  const a = E.abgleich;
+  if (a && a.am) {
+    let k = Number(a.konto) || 0, c = Number(a.bar) || 0;
+    for (const b of S.buchungen) {
+      if (!b.erledigt || !b.erledigtAm || b.erledigtAm <= a.am) continue;
+      const v = (b.art === 'einnahme' ? 1 : -1) * (Number(b.betrag) || 0);
+      if (b.quelle === 'bar') c += v; else k += v;
+    }
+    if (E.sparUeberwiesen && E.sparAm && E.sparAm > a.am) k -= E.sparbetrag;
+    R.konto = r2(k); R.bar = r2(c); R.jetzt = r2(k + c);
+  }
+  // Geld zu Zyklusbeginn: so viel war da, bevor die erledigten Buchungen dieses Zyklus liefen
+  R.start = R.jetzt == null ? null : r2(R.jetzt - R.einErhalten + R.zahBezahlt + R.alltag + R.sparErledigt);
+  R.uebrig = R.start == null ? null : r2(R.einGesamt - R.zahGesamt - R.alltag - R.spar + R.start);
+  R.uebrigOhne = R.jetzt == null ? null : r2(R.jetzt - R.zahOffen - R.sparOffen);
+
+  // Budgets
+  R.wochen = wochen(E);
+  R.bereiche = bereiche().map(b => {
+    const budget = b.ausWoche ? summe(R.wochen) : r2(b.budget);
+    const ausgegeben = summe(aus.filter(x => (x.bereich || 'sonstiges') === b.id));
+    return { ...b, budget, ausgegeben, frei: r2(budget - ausgegeben) };
+  });
+  const bekannte = new Set(R.bereiche.map(b => b.id));
+  R.ohneBereich = summe(aus.filter(x => !bekannte.has(x.bereich || 'sonstiges')));
+  R.budgetGesamt = summe(R.bereiche, b => b.budget);
+  R.budgetRest = summe(R.bereiche, b => Math.max(0, b.frei));
+  const basis = S.mitErwartet ? R.uebrig : R.uebrigOhne;
+  R.puffer = basis == null ? null : r2(basis - R.budgetRest);
+  const t = heute();
+  const lm = R.bereiche.find(b => b.ausWoche);
+  R.wochen.forEach(w => {
+    w.ausgegeben = lm ? summe(aus.filter(x => (x.bereich || 'sonstiges') === lm.id && x.datum >= w.von && x.datum <= w.bis)) : 0;
+    w.rest = r2(w.betrag - w.ausgegeben);
+    w.jetzt = t >= w.von && t <= w.bis;
+    w.vorbei = t > w.bis;
+    w.nochTage = w.jetzt ? tageZwischen(t, w.bis) + 1 : (w.vorbei ? 0 : w.tage);
+  });
+  R.dieseWoche = R.wochen.find(w => w.jetzt) || null;
+  return R;
+}
+
+/* Fixkosten: wann ist eine Fixkosten-Zeile im Zyklus fällig? */
+function faelligkeiten(f, E) {
+  const out = []; const r = Number(f.rhythmus) || 1;
+  const [sy, sm] = (f.startMonat || E.zyklus.von.slice(0, 7)).split('-').map(Number);
+  let d = ausIso(E.zyklus.von.slice(0, 8) + '01');
+  const ende = E.zyklus.bis;
+  for (let i = 0; i < 14; i++) {
+    const y = d.getFullYear(), m = d.getMonth() + 1;
+    const diff = (y - sy) * 12 + (m - sm);
+    if (diff >= 0 && diff % r === 0) {
+      const tag = Math.min(Number(f.tag) || 1, tageImMonat(y, m));
+      const datum = `${y}-${pad(m)}-${pad(tag)}`;
+      if (datum >= E.zyklus.von && datum <= ende) out.push(datum);
+    }
+    d.setMonth(d.getMonth() + 1);
+    if (isoTag(d) > ende) break;
+  }
+  return out;
+}
+
+/* Schon als Zahlung da? Gleiche Fixkosten-Zeile, oder gleicher Name am selben Tag (von Hand eingetragen) */
+const gleicherName = (a, b) => String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
+function fixStand(f, E) {
+  const z = E.zyklus;
+  const dats = f.aktiv === false ? [] : faelligkeiten(f, E);
+  const linked = S.buchungen.filter(b => b.art === 'zahlung' && b.datum >= z.von && b.datum <= z.bis && (b.fixId === f.id || (!b.fixId && gleicherName(b.titel, f.titel)))).sort((a, b) => a.datum.localeCompare(b.datum));
+  const freiDats = dats.filter(d => !linked.some(b => b.datum === d));
+  const freiLinked = linked.filter(b => !dats.includes(b.datum));
+  return { dats, linked, fehlend: freiDats.slice(freiLinked.length) };
+}
+
+/* ───────── Speicher ───────── */
+function setSync(text, s) { const el = $('#sync'); el.textContent = text; el.dataset.s = s || ''; }
+function zeigeSync() {
+  if (S.verfuegbar === false) return setSync('Speichern nicht möglich', 'err');
+  if (S.verfuegbar) setSync('Auf diesem Gerät gespeichert', 'ok');
+}
+let toastT;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 3200); }
+
+async function schreiben(fn, ok) {
+  if (!S.db) { toast('Speichern geht in dieser Ansicht nicht.'); return false; }
+  if (S.nurLesen) { toast('Speichern ist in diesem Browser nicht möglich.'); return false; }
+  setSync('Speichere …', '');
+  try {
+    await fn();
+    zeigeSync(); if (ok) toast(ok); return true;
+  } catch (e) {
+    if (e && e.code === 'invalid_argument' && S.kannSchreiben !== true) { S.nurLesen = true; zeigeSync(); render(); toast('Speichern ist in diesem Browser nicht möglich.'); return false; }
+    if (e && e.code === 'unavailable') {
+      await new Promise(r => setTimeout(r, 400 + Math.random() * 600));
+      try { await fn(); zeigeSync(); if (ok) toast(ok); return true; } catch (e2) { e = e2; }
+    }
+    setSync('Nicht gespeichert', 'err');
+    toast(e && e.code === 'quota_exceeded' ? 'Speicher voll – bitte alte Einträge löschen.' : 'Nicht gespeichert. Bitte nochmal versuchen.');
+    return false;
+  }
+}
+const jetztIso = () => new Date().toISOString();
+const einstRef = () => S.db.doc('haushalt/einstellungen');
+async function einstAendern(patch, ok) {
+  return schreiben(async () => {
+    const snap = await einstRef().get();
+    const neu = { ...(snap.exists ? snap.data() : {}), ...patch, geaendert: jetztIso() };
+    await einstRef().set(neu);
+  }, ok);
+}
+
+/* ───────── Darstellung ───────── */
+function aktuellerTab() { const h = (location.hash || '').slice(1); return TABS.includes(h) ? h : 'uebersicht'; }
+function vonWahl() { const v = lsGet('hb_von'); return v === 'p2' ? 'p2' : 'p1'; }
+function name(p) { return einst().namen[p] || ''; }
+
+function render() {
+  const main = $('#main');
+  if (main.contains(document.activeElement) && document.activeElement.matches('input:not([type="checkbox"]),select')) { S.renderOffen = true; return; }
+  S.renderOffen = false;
+  const E = einst();
+  $('#paar').textContent = `${E.namen.p1} & ${E.namen.p2}`;
+  $('#mark').textContent = (E.namen.p1[0] || 'a').toLowerCase() + '.';
+  const sel = $('#von-wahl');
+  sel.options[0].textContent = E.namen.p1; sel.options[1].textContent = E.namen.p2; sel.value = vonWahl();
+  const tab = aktuellerTab();
+  document.querySelectorAll('#tabs a').forEach(a => { if (a.getAttribute('href') === '#' + tab) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  const geladen = Object.values(S.geladen).every(Boolean);
+  if (S.verfuegbar === null || (S.verfuegbar && !geladen)) {
+    main.innerHTML = `<div class="card"><h3>Haushaltsbuch wird geladen …</h3><p class="muted">Hier erscheinen gleich eure Zahlungen, Einnahmen, Budgets und der Monatsplan.</p></div>`;
+    return;
+  }
+  const R = rechnen();
+  const kopf = (titel, unter, knopf) => `<div style="display:flex;flex-direction:column;gap:6px"><h1>${titel}</h1><p class="muted">${unter}</p></div>${knopf != null ? knopf : S.nurLesen ? '' : `<button class="btn primary wide" data-a="neu" data-art="ausgabe"><span aria-hidden="true" style="font-size:24px;line-height:1">+</span> Ausgabe</button>`}`;
+  let html = '';
+  if (S.verfuegbar === false) html += `<div class="banner"><b>Hier wird nichts gespeichert.</b> Dieser Browser erlaubt der Seite kein Speichern, zum Beispiel im privaten Surfen. Öffne die Seite normal in Safari oder vom Home-Bildschirm.</div>`;
+  else if (!S.einst && !S.buchungen.length && tab !== 'einstellungen') html += `<div class="banner info"><b>Willkommen!</b> Hast du eine Sicherung vom alten Haushaltsbuch? Dann unter <a class="link" href="#einstellungen">Einstellungen → Sicherung einspielen</a>. Sonst dort Namen, Gehaltszyklus und Kontostand eintragen.</div>`;
+  const V = { uebersicht, monate, zahlungen, fixkosten, budgets, verlauf, einstellungen }[tab];
+  html += V(R, kopf);
+  main.innerHTML = html;
+  const neueste = [S.einst?.geaendert, ...S.buchungen.map(b => b.geaendert), ...S.fix.map(b => b.geaendert), ...S.bereiche.map(b => b.geaendert), ...S.zyklen.map(b => b.geaendert)].filter(Boolean).sort().pop();
+  $('#gespeichert').textContent = neueste ? `Gespeichert · ${zeitpunkt(neueste)}` : 'Noch nichts gespeichert';
+}
+
+/* Bausteine */
+function zahlungZeile(b, mitDatum = true) {
+  const sub = b.erledigt ? (b.art === 'einnahme' ? 'Eingegangen' : 'Bezahlt') : (mitDatum ? `${tm(b.datum)} · ${b.art === 'einnahme' ? 'erwartet' : faellig(b.datum)}` : '');
+  const spaet = !b.erledigt && b.art === 'zahlung' && b.datum < heute();
+  return `<div class="row ${b.erledigt ? 'done' : ''}">
+    <div class="l"><input type="checkbox" class="cb" aria-label="${esc(b.titel)} ${b.art === 'einnahme' ? 'eingegangen' : 'bezahlt'}" data-a="erledigt" data-id="${esc(b.id)}" ${b.erledigt ? 'checked' : ''} ${S.nurLesen ? 'disabled' : ''}>
+      <div class="tx tap" data-a="bearbeiten" data-id="${esc(b.id)}" role="button" tabindex="0"><div class="tt">${esc(b.titel)}</div><div class="sub ${spaet ? 'danger' : ''}">${sub}${b.quelle === 'bar' ? ' · bar' : ''}</div></div></div>
+    <div class="r amt"><b>${eur(b.betrag)}</b></div></div>`;
+}
+function budgetListe(R, editierbar) {
+  if (!R.bereiche.length) return '<p class="muted">Noch keine Bereiche.</p>';
+  return R.bereiche.map(b => {
+    const ohneBudget = !b.ausWoche && !(b.budget > 0);
+    const pct = b.budget > 0 ? Math.min(100, b.ausgegeben / b.budget * 100) : 0;
+    const ueber = !ohneBudget && b.frei < 0;
+    const rechts = editierbar
+      ? (b.ausWoche
+          ? `<span class="muted small">aus Wochenbudget</span> <b class="amt">${eur(b.budget)}</b>`
+          : `<span class="inp"><span class="muted small">Budget €</span><input id="bud-${esc(b.id)}" class="amt-in" inputmode="decimal" value="${amtIn(b.budget)}" data-a="budget" data-id="${esc(b.id)}" ${S.nurLesen ? 'disabled' : ''}></span>`)
+      : ohneBudget ? `<span class="amt"><b>${eur(b.ausgegeben)}</b> ausgegeben</span>`
+      : `<span class="amt ${ueber ? 'danger' : ''}"><b>${eurS(b.frei)}</b> ${ueber ? 'drüber' : 'frei'}</span>`;
+    const eintraege = R.aus.filter(x => (x.bereich || 'sonstiges') === b.id).sort((x, y) => y.datum.localeCompare(x.datum));
+    const offen = S.offenerBereich === b.id;
+    return `<div class="budget"><div class="top"><span class="name">${esc(b.name)}</span><span>${rechts}</span></div>
+      ${ohneBudget ? '' : `<div class="prog ${ueber ? 'over' : ''}"><i style="width:${pct.toFixed(1)}%"></i></div>`}
+      <div class="top small muted"><span class="amt">${ohneBudget ? 'kein Budget festgelegt' : `${eur(b.ausgegeben)} ausgegeben`}</span><span class="amt">${ohneBudget ? '' : `von ${eur(b.budget)}`}</span></div>
+      <div class="btn-row" style="justify-content:flex-start;gap:16px">${eintraege.length ? `<button class="link small" data-a="bereich-auf" data-id="${esc(b.id)}" aria-expanded="${offen}">${offen ? '▾ Einträge zuklappen' : `▸ ${eintraege.length} Eintr${eintraege.length === 1 ? 'ag' : 'äge'} ansehen`}</button>` : ''}
+        ${editierbar && !b.ausWoche && !S.nurLesen ? `<button class="link small" data-a="bereich-bearbeiten" data-id="${esc(b.id)}">Umbenennen oder löschen</button>` : ''}</div>
+      ${offen ? `<div class="rows">${eintraege.map(x => `<div class="row tap" data-a="bearbeiten" data-id="${esc(x.id)}" role="button" tabindex="0"><div class="l"><div class="tx"><div class="tt">${esc(x.titel || 'Ausgabe')}</div><div class="sub">${tm(x.datum)}${x.von ? ' · ' + esc(name(x.von)) : ''} · ${x.quelle === 'bar' ? 'bar' : 'Konto'} · antippen zum Ändern</div></div></div><div class="r amt"><b>${eur(x.betrag)}</b></div></div>`).join('')}</div>` : ''}</div>`;
+  }).join('') + (R.ohneBereich ? `<p class="small muted">Dazu ${eur(R.ohneBereich)} in gelöschten Bereichen.</p>` : '');
+}
+const UHR = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none"/><path d="M12 7v5l3 2" fill="none"/></svg>';
+function faelligHinweis(R) {
+  const morgen = plusTage(heute(), 1);
+  const bald = R.zah.filter(b => !b.erledigt && b.datum <= morgen).sort((a, b) => a.datum.localeCompare(b.datum));
+  if (!bald.length) return '';
+  const spaet = bald.some(b => b.datum < heute());
+  return `<div class="banner ${spaet ? '' : 'info'}"><b>${spaet ? 'Überfällig oder bald fällig' : 'Bald fällig'}:</b> ${bald.map(b => `${esc(b.titel)} ${eur(b.betrag)} (${faellig(b.datum)})`).join(', ')}. Schon bezahlt? Dann unten das Häkchen setzen.</div>`;
+}
+const erwartetHinweis = R => R.einOffen > 0 ? `<div class="banner warn">${UHR}<span><b class="amt">${eur(R.einOffen)}</b> Einnahmen sind noch erwartet. Die Prognose gilt, wenn dieses Geld eingeht.</span></div>` : '';
+function schnellKarte(R) {
+  if (S.nurLesen) return '';
+  const bs = bereiche(); const q = S.schnell; const w = R.dieseWoche;
+  const tag = w && R.E.wochenbudget > 0 && w.nochTage > 0 ? `<p class="small muted">Diese Woche noch <b class="amt">${eurS(w.rest)}</b> für Einkäufe${w.rest > 0 ? ` · etwa ${eur(w.rest / w.nochTage)} pro Tag` : ''}</p>` : '';
+  const datumHinweis = q.datum && q.datum !== heute() ? ` Datum vom Bon: ${tmj(q.datum)}.` : '';
+  return `<form class="card" id="schnell" novalidate><div class="card-h"><h2>Heute schnell eintragen</h2><button type="button" class="link" data-a="neu" data-art="ausgabe" aria-label="Ausgabe mit allen Feldern eintragen" style="font-size:26px;line-height:1">+</button></div>
+    ${tag}
+    ${S.bildOk ? `<div><label class="btn foto-btn" for="q-foto"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h3l2-3h6l2 3h3v12H4z" fill="none"/><circle cx="12" cy="13" r="3.5" fill="none"/></svg>${q.laeuft ? 'Wird gelesen …' : 'Kassenbon fotografieren'}</label><input type="file" id="q-foto" class="vh" accept="${esc(S.bildTypen)}" ${q.laeuft ? 'disabled' : ''}></div>` : ''}
+    <div class="grid2"><label class="f" for="q-betrag">Betrag in €<input id="q-betrag" class="amt-in" inputmode="decimal" placeholder="0,00" autocomplete="off" value="${esc(q.betrag)}"></label>
+      <label class="f" for="q-titel">Wofür?<input id="q-titel" type="text" placeholder="Einkauf, Benzin …" autocomplete="off" value="${esc(q.titel)}"></label>
+      <label class="f" for="q-bereich">Bereich<select id="q-bereich">${bs.map(b => `<option value="${esc(b.id)}" ${b.id === q.bereich ? 'selected' : ''}>${esc(b.name)}</option>`).join('')}<option value="__neu">+ Neuer Bereich …</option></select></label>
+      <label class="f" for="q-quelle">Bezahlt mit<select id="q-quelle"><option value="konto" ${q.quelle !== 'bar' ? 'selected' : ''}>Karte / Konto</option><option value="bar" ${q.quelle === 'bar' ? 'selected' : ''}>Bar</option></select></label></div>
+    ${q.status || datumHinweis ? `<p class="q-status ${q.laeuft ? 'laeuft' : ''}" id="q-status" role="status">${esc(q.status)}${esc(datumHinweis)}</p>` : ''}
+    <div class="btn-row"><button class="btn primary" type="submit" ${q.laeuft ? 'disabled' : ''}>✓ Eintragen</button></div></form>`;
+}
+function monatsplan(R) {
+  const a = R.zahGesamt, b = R.alltag + R.spar + Math.max(0, R.budgetRest);
+  const ges = a + b; const pa = ges > 0 ? a / ges * 100 : 50;
+  return `<div class="card"><div class="card-h"><h2>Dein Monatsplan</h2><span class="muted small">${tm(R.E.zyklus.von)} – ${tm(R.E.zyklus.bis)}</span></div>
+    <div>
+      <div class="kv"><span class="k">Einnahmen, gesamt</span><span class="amt">${eur(R.einGesamt)}</span></div>
+      <div class="kv"><span class="k">Rechnungen, gesamt</span><span class="amt">− ${eur(R.zahGesamt)}</span></div>
+      <div class="kv"><span class="k">Alltag, ausgegeben</span><span class="amt">− ${eur(R.alltag)}</span></div>
+      <div class="kv"><span class="k">Sparbetrag</span><span class="amt">− ${eur(R.spar)}</span></div>
+      <div class="kv"><span class="k">Geld zu Zyklusbeginn</span><span class="amt">${eurOderStrich(R.start)}</span></div>
+      <div class="kv total"><span class="k">Voraussichtlich übrig</span><span class="amt">${eurOderStrich(R.uebrig)}</span></div>
+    </div>
+    ${R.start == null ? `<p class="small danger">„Geld zu Zyklusbeginn“ fehlt, weil noch kein Kontostand eingetragen ist: Einstellungen → Konto &amp; Bargeld → Abgleichen.</p>` : ''}
+    <div class="split" role="img" aria-label="Rechnungen ${Math.round(pa)} Prozent, Alltag und Sparen ${Math.round(100 - pa)} Prozent"><i style="width:${pa.toFixed(1)}%"></i><i style="width:${(100 - pa).toFixed(1)}%"></i></div>
+    <div class="top small muted" style="display:flex;justify-content:space-between"><span>Rechnungen</span><span>Alltag &amp; Sparen</span></div>
+    <details class="how"><summary>So wird gerechnet</summary>
+      <div style="padding-top:8px">
+        <div class="kv"><span class="k">Konto + Bargeld jetzt</span><span class="amt">${eurOderStrich(R.jetzt)}</span></div>
+        <div class="kv"><span class="k">+ noch erwartete Einnahmen</span><span class="amt">${eur(R.einOffen)}</span></div>
+        <div class="kv"><span class="k">− noch offene Zahlungen</span><span class="amt">${eur(R.zahOffen)}</span></div>
+        <div class="kv"><span class="k">− Sparbetrag, noch nicht überwiesen</span><span class="amt">${eur(R.sparOffen)}</span></div>
+        <div class="kv total"><span class="k">= Voraussichtlich übrig</span><span class="amt">${eurOderStrich(R.uebrig)}</span></div>
+        <p class="small muted">Dasselbe Ergebnis wie oben, nur vom heutigen Kontostand aus gerechnet. „Geld zu Zyklusbeginn“ ist der Kontostand, bevor die schon erledigten Buchungen dieses Zyklus liefen.</p>
+      </div></details></div>`;
+}
+
+/* ───────── Reiter ───────── */
+function uebersicht(R, kopf) {
+  const E = R.E;
+  const offen = R.zah.filter(b => !b.erledigt).sort((a, b) => a.datum.localeCompare(b.datum));
+  const bezahlt = R.zah.filter(b => b.erledigt).sort((a, b) => b.datum.localeCompare(a.datum));
+  const jm = heute().slice(0, 7);
+  const knoepfe = `<div class="btn-grid"><a class="btn" href="#fixkosten">Fixkosten</a>${S.nurLesen ? '<span></span>' : `<button class="btn primary" data-a="neu" data-art="ausgabe"><span aria-hidden="true" style="font-size:22px;line-height:1">+</span> Ausgabe</button>`}<a class="btn full" href="#monate">Monatsübersicht ansehen</a></div><p class="small muted">${monatName(jm)} ist aktuell · noch ${Math.max(0, tageZwischen(heute(), E.zyklus.bis) + 1)} Tage bis ${tm(E.zyklus.bis)}</p>`;
+  return kopf('Dein Geld. Klar im Blick.', `${tm(E.zyklus.von)} – ${tmj(E.zyklus.bis)}`, knoepfe) + `
+  <div class="card hl">
+    <div><div class="eyebrow">Konto &amp; Bar · jetzt vorhanden</div><div class="hero-n amt">${eurOderStrich(R.jetzt)}</div>
+      ${R.jetzt == null ? `<p class="small">Noch kein Kontostand eingetragen. <a class="link" href="#einstellungen">Einstellungen → Abgleichen</a></p>` : `<p class="small muted amt">${eur(R.konto)} Konto · ${eur(R.bar)} bar</p>`}</div>
+    <div style="border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:6px"><div class="eyebrow">Nach offenen Zahlungen übrig</div>
+      <div class="hero-n acc amt ${R.uebrig != null && R.uebrig < 0 ? 'danger' : ''}">${eurOderStrich(R.uebrig)}</div>
+      ${R.uebrig == null ? '' : `<p class="small muted amt">${eur(R.jetzt)} + ${eur(R.einOffen)} erwartet − ${eur(R.zahOffen)} Zahlungen − ${eur(R.sparOffen)} Sparen</p>
+      <p class="small muted">Im Plan übrig bis ${tm(E.zyklus.bis)}${R.einOffen > 0 ? ' Erwartete Einnahmen sind einbezogen.' : ''} Für Alltag &amp; Puffer sind davon ${eur(R.budgetRest)} eingeplant.</p>`}</div>
+  </div>
+  ${faelligHinweis(R)}
+  ${erwartetHinweis(R)}
+  ${schnellKarte(R)}
+  <div class="card"><div class="card-h"><h2>Deine nächsten Zahlungen</h2><span class="muted small">${offen.length} offen</span></div>
+    <div class="rows">${offen.length + bezahlt.length ? [...offen, ...bezahlt.slice(0, 2)].map(b => zahlungZeile(b)).join('') : '<p class="muted">Keine Zahlungen in diesem Zyklus. Unter <a class="link" href="#fixkosten">Fixkosten</a> legst du feste Zahlungen einmal an.</p>'}</div>
+    <a class="link" href="#zahlungen">Alle Details →</a></div>
+  <div class="card"><div class="card-h"><h2>Einnahmen</h2><span class="muted small amt">${eur(R.einOffen)} erwartet</span></div>
+    <div class="rows">${R.ein.length ? R.ein.sort((a, b) => a.datum.localeCompare(b.datum)).map(b => `
+      <div class="row tap" data-a="bearbeiten" data-id="${esc(b.id)}" role="button" tabindex="0"><div class="l"><div class="tx"><div class="tt">${esc(b.titel)}</div><div class="sub">${tm(b.datum)} · ${b.quelle === 'bar' ? 'Bar' : 'Konto'}</div></div></div>
+        <div class="r"><div class="amt"><b>${eur(b.betrag)}</b></div><div class="sub ${b.erledigt ? 'ok' : ''}">${b.erledigt ? 'Eingegangen' : 'Noch erwartet'}</div></div></div>
+      ${b.vomVormonat && !b.erledigt ? `<p class="small warn-text" style="padding-bottom:8px">Betrag vom Vormonat. Antippen und mit dem Lohnzettel vergleichen.</p>` : ''}
+      ${b.erledigt ? '' : `<label class="check small" style="padding-bottom:10px"><input type="checkbox" data-a="erledigt" data-id="${esc(b.id)}" ${S.nurLesen ? 'disabled' : ''}><span>${esc(b.titel)} ist eingegangen</span></label>`}`).join('') : '<p class="muted">Noch keine Einnahme eingetragen.</p>'}</div>
+    ${S.nurLesen ? '' : `<div><button class="btn" data-a="neu" data-art="einnahme">+ Einnahme hinzufügen</button></div>`}</div>
+  <div class="card"><div class="card-h"><h2>Deine Alltagsbudgets</h2><span class="muted small amt">${eur(R.alltag)} genutzt</span></div>
+    <div>${budgetListe(R, false)}</div><a class="link" href="#budgets">Budgets anpassen →</a></div>
+  ${monatsplan(R)}`;
+}
+
+function monate(R, kopf) {
+  const E = R.E; const t = heute(); const jm = t.slice(0, 7);
+  const set = new Set();
+  let d = ausIso(E.zyklus.von.slice(0, 8) + '01');
+  while (isoTag(d).slice(0, 7) <= E.zyklus.bis.slice(0, 7)) { set.add(isoTag(d).slice(0, 7)); d.setMonth(d.getMonth() + 1); }
+  S.buchungen.forEach(b => b.datum && set.add(b.datum.slice(0, 7)));
+  const liste = [...set].sort();
+  if (!S.monat || !set.has(S.monat)) S.monat = set.has(jm) ? jm : liste[liste.length - 1];
+  const karte = ym => {
+    const bs = S.buchungen.filter(b => b.datum && b.datum.slice(0, 7) === ym);
+    const ein = bs.filter(b => b.art === 'einnahme'), zah = bs.filter(b => b.art === 'zahlung'), aus = bs.filter(b => b.art === 'ausgabe');
+    const erh = summe(ein.filter(b => b.erledigt)), erw = summe(ein.filter(b => !b.erledigt));
+    const bez = summe(zah.filter(b => b.erledigt)), off = summe(zah.filter(b => !b.erledigt)), all = summe(aus);
+    const diff = r2(erh - bez - all);
+    const status = ym === jm ? 'Aktuell' : ym > jm ? 'Geplant' : 'Vergangen';
+    return `<div class="card ${ym === S.monat ? 'hl' : ''}"><div class="card-h"><h2>${monatName(ym)}</h2><span class="chip">${status}</span></div>
+      <p class="small muted">Buchungen nach Datum im Kalendermonat</p>
+      <div><div class="kv"><span class="k">Einnahmen erhalten</span><b class="amt">${eur(erh)}</b></div>
+      ${erw ? `<div class="kv"><span class="k">Einnahmen erwartet</span><span class="amt">${eur(erw)}</span></div>` : ''}
+      <div class="kv"><span class="k">Zahlungen bezahlt</span><span class="amt">${eur(bez)}</span></div>
+      <div class="kv"><span class="k">Alltagsausgaben</span><span class="amt">${eur(all)}</span></div>
+      <div class="kv"><span class="k">Zahlungen noch offen</span><b class="amt ${off ? 'danger' : ''}">${eur(off)}</b></div>
+      <div class="kv total"><span class="k">Differenz der Einträge</span><span class="amt ${diff < 0 ? 'danger' : ''}">${eurS(diff)}</span></div></div>
+      <p class="small muted">${bs.length} erfasste Buchung${bs.length === 1 ? '' : 'en'} · Einnahmen erhalten minus bezahlte Zahlungen und Alltagsausgaben.</p>
+      ${ym === S.monat ? '<p class="small muted">Die Einträge stehen unten.</p>' : `<div><button class="btn" data-a="monat" data-m="${ym}">Einträge ansehen</button></div>`}</div>`;
+  };
+  const eintr = S.buchungen.filter(b => b.datum && b.datum.slice(0, 7) === S.monat).sort((a, b) => a.datum.localeCompare(b.datum));
+  const artText = { einnahme: 'Einnahme', zahlung: 'Zahlung', ausgabe: 'Alltag' };
+  const statusText = b => b.art === 'einnahme' ? (b.erledigt ? 'Erhalten' : 'Erwartet') : b.art === 'zahlung' ? (b.erledigt ? 'Bezahlt' : 'Offen') : (bereiche().find(x => x.id === b.bereich)?.name || 'Alltag');
+  return kopf('Eure Monate im Überblick.', `Abgeschlossene Monate und aktuelle Buchungen · Gehaltszeitraum ${tmj(E.zyklus.von)} – ${tmj(E.zyklus.bis)}`) + `
+  <div class="card"><div class="card-h"><h3>Aktueller Stand · ${tm(t)}</h3><span class="muted small">${esc(E.namen.p1)} &amp; ${esc(E.namen.p2)}</span></div>
+    <div class="stats3"><div><div class="muted small">Konto jetzt</div><div class="n amt">${eurOderStrich(R.konto)}</div></div>
+    <div><div class="muted small">Bargeld jetzt</div><div class="n amt">${eurOderStrich(R.bar)}</div></div>
+    <div><div class="muted small">Zusammen</div><div class="n amt">${eurOderStrich(R.jetzt)}</div></div></div>
+    ${E.abgleich ? `<p class="small muted">Zuletzt abgeglichen ${zeitpunkt(E.abgleich.am)}, seither mit allen erledigten Buchungen fortgerechnet.</p>` : `<p class="small">Noch kein Kontostand. <a class="link" href="#einstellungen">Einstellungen → Abgleichen</a></p>`}</div>
+  <div class="months">${liste.map(ym => `<button class="chip ${ym === S.monat ? 'on' : ''}" data-a="monat" data-m="${ym}">${monatName(ym)}${ym === jm ? ' · Aktuell' : ''}</button>`).join('')}</div>
+  ${S.nurLesen ? '' : `<div><button class="btn" data-a="neu-zyklus">Abgeschlossenen Monat hinzufügen</button></div>`}
+  ${liste.map(karte).join('')}
+  <p class="small muted">Die laufenden Buchungen sind nach Datum zusammengefasst. Kontostand-Abgleiche sind in der Differenz nicht enthalten.</p>
+  <div class="card"><div class="card-h"><h2>Einträge · ${monatName(S.monat)}</h2></div>
+    <div class="rows">${eintr.length ? eintr.map(b => `<div class="row tap" data-a="bearbeiten" data-id="${esc(b.id)}" role="button" tabindex="0"><div class="l"><div class="tx"><div class="tt">${esc(b.titel)}</div><div class="sub">${tm(b.datum)} · ${artText[b.art]}${b.von ? ' · ' + esc(name(b.von)) : ''}</div></div></div>
+      <div class="r"><div class="amt"><b>${b.art === 'einnahme' ? '+ ' : '− '}${eur(b.betrag)}</b></div><div class="sub">${esc(statusText(b))}</div></div></div>`).join('') : '<p class="muted">Keine Einträge in diesem Monat.</p>'}</div></div>`;
+}
+
+function zahlungen(R, kopf) {
+  const offen = R.zah.filter(b => !b.erledigt).sort((a, b) => a.datum.localeCompare(b.datum));
+  const bez = R.zah.filter(b => b.erledigt).sort((a, b) => a.datum.localeCompare(b.datum));
+  const spaet = offen.filter(b => b.datum < heute());
+  const ausserhalb = S.buchungen.filter(b => b.art === 'zahlung' && !b.erledigt && b.datum > R.E.zyklus.bis).length;
+  return kopf('Eure Zahlungen.', `Rechnungen und Einnahmen im Zyklus ${tmj(R.E.zyklus.von)} – ${tmj(R.E.zyklus.bis)}.`) + `
+  ${S.nurLesen ? '' : `<div class="btn-row" style="justify-content:flex-start"><button class="btn" data-a="neu" data-art="zahlung">+ Zahlung</button><button class="btn" data-a="neu" data-art="einnahme">+ Einnahme</button></div>`}
+  ${spaet.length ? `<div class="banner"><b>${spaet.length} Zahlung${spaet.length === 1 ? ' ist' : 'en sind'} überfällig</b> (${eur(summe(spaet))}). Wenn schon bezahlt: Häkchen setzen.</div>` : ''}
+  <div class="card"><div class="card-h"><h2>Offen</h2><b class="amt danger">${eur(R.zahOffen)}</b></div>
+    <div class="rows">${offen.length ? offen.map(b => zahlungZeile(b)).join('') : '<p class="muted">Alles bezahlt.</p>'}</div></div>
+  <div class="card"><div class="card-h"><h2>Bezahlt</h2><b class="amt">${eur(R.zahBezahlt)}</b></div>
+    <div class="rows">${bez.length ? bez.map(b => zahlungZeile(b)).join('') : '<p class="muted">Noch nichts bezahlt.</p>'}</div></div>
+  <div class="card"><div class="card-h"><h2>Einnahmen</h2><b class="amt">${eur(R.einGesamt)}</b></div>
+    <div class="rows">${R.ein.length ? R.ein.sort((a, b) => a.datum.localeCompare(b.datum)).map(b => zahlungZeile(b)).join('') : '<p class="muted">Noch keine Einnahme.</p>'}</div></div>
+  ${ausserhalb ? `<p class="small muted">${ausserhalb} offene Zahlung${ausserhalb === 1 ? ' liegt' : 'en liegen'} nach dem ${tmj(R.E.zyklus.bis)} und zählt erst im nächsten Zyklus.</p>` : ''}`;
+}
+
+function fixkosten(R, kopf) {
+  const E = R.E;
+  const liste = [...S.fix].sort((a, b) => (Number(a.tag) || 0) - (Number(b.tag) || 0) || String(a.titel).localeCompare(String(b.titel)));
+  const staende = liste.map(f => ({ f, st: fixStand(f, E) }));
+  const angelegt = staende.flatMap(x => x.st.linked);
+  const fehlend = staende.flatMap(x => x.st.fehlend.map(d => ({ f: x.f, d })));
+  const bezahlt = summe(angelegt.filter(b => b.erledigt));
+  const gesamt = r2(summe(angelegt) + summe(fehlend, x => x.f.betrag));
+  const offen = r2(gesamt - bezahlt);
+  const aktiv = S.fix.filter(f => f.aktiv !== false);
+  const proKat = KATEGORIEN.map(k => ({ k, s: summe(aktiv.filter(f => (f.kategorie || 'Sonstiges') === k), f => (Number(f.betrag) || 0) / (Number(f.rhythmus) || 1)) })).filter(x => x.s > 0);
+  const details = S.nurLesen ? '' : f => `<button class="link small" data-a="fix-bearbeiten" data-id="${esc(f.id)}">▸ Details bearbeiten</button>`;
+  const zeile = (f, b, d) => {
+    let hinweis, cls = '';
+    if (b) { hinweis = b.erledigt ? 'Bezahlt' : `${tm(b.datum)} · ${faellig(b.datum)}`; if (!b.erledigt && b.datum < heute()) cls = 'danger'; }
+    else if (d) { hinweis = `${tm(d)} · noch nicht übernommen`; cls = 'danger'; }
+    else hinweis = f.aktiv === false ? 'pausiert' : `diesmal nicht fällig · ${RHYTHMUS[f.rhythmus] || 'monatlich'}`;
+    return `<div class="row ${b && b.erledigt ? 'done' : ''}"><div class="l">
+      ${b ? `<input type="checkbox" class="cb" aria-label="${esc(f.titel)} bezahlt" data-a="erledigt" data-id="${esc(b.id)}" ${b.erledigt ? 'checked' : ''} ${S.nurLesen ? 'disabled' : ''}>` : '<span class="cb-leer" aria-hidden="true"></span>'}
+      <div class="tx"><div class="tt">${esc(f.titel)}</div><div class="sub ${cls}">${hinweis}</div>${details ? details(f) : ''}</div></div>
+      <div class="r amt"><b>${eur(b ? b.betrag : f.betrag)}</b>${Number(f.rhythmus) > 1 ? `<div class="sub">${RHYTHMUS[f.rhythmus]}</div>` : ''}</div></div>`;
+  };
+  const zeilen = staende.map(({ f, st }) => {
+    const teile = st.linked.map(b => zeile(f, b));
+    st.fehlend.forEach(d => teile.push(zeile(f, null, d)));
+    if (!teile.length) teile.push(zeile(f, null, null));
+    return teile.join('');
+  });
+  const neuKnopf = S.nurLesen ? '' : `<button class="btn primary wide" data-a="fix-neu"><span aria-hidden="true" style="font-size:24px;line-height:1">+</span> Fixkosten hinzufügen</button>`;
+  return kopf('Eure Fixkosten im Blick.', `Regelmäßige Zahlungen für ${tm(E.zyklus.von)} – ${tmj(E.zyklus.bis)}`, neuKnopf) + `
+  <div class="card"><div class="fix-sum">
+    <div><div class="muted">Fixkosten in diesem Haushaltsmonat</div><div class="n amt">${eur(gesamt)}</div></div>
+    <div><div class="muted">Davon noch offen</div><div class="n amt ${offen > 0 ? 'danger' : ''}">${eur(offen)}</div></div>
+    <div><div class="muted">Bereits bezahlt</div><div class="n amt">${eur(bezahlt)}</div></div></div>
+    ${R.einGesamt > 0 && gesamt > 0 ? `<p class="small muted">Das sind ${Math.round(gesamt / R.einGesamt * 100)} % eurer Einnahmen in diesem Zyklus (${eur(R.einGesamt)}).</p>` : ''}
+    ${proKat.length ? `<details class="how"><summary>Nach Art aufgeteilt (pro Monat)</summary><div style="padding-top:8px">${proKat.map(x => `<div class="kv"><span class="k">${esc(x.k)}</span><span class="amt">${eur(x.s)}</span></div>`).join('')}</div></details>` : ''}
+  </div>
+  ${fehlend.length && !S.nurLesen ? `<div class="banner info"><b>${fehlend.length} Fixkosten ${fehlend.length === 1 ? 'fehlt' : 'fehlen'} noch bei den Zahlungen</b> (${eur(summe(fehlend, x => x.f.betrag))}). <div style="padding-top:10px"><button class="btn primary" data-a="fix-uebernehmen">Jetzt übernehmen</button></div></div>` : ''}
+  <div class="card"><div class="card-h"><h2>Eure monatlichen Fixkosten</h2><span class="muted small">${S.fix.length} Posten</span></div>
+    <p class="small muted">Hier stehen eure regelmäßigen Kosten. Offene Beträge sind im Monatsplan berücksichtigt. Beim Abschluss des Zyklus werden sie für den nächsten Zyklus wieder übernommen.</p>
+    <div class="rows">${zeilen.length ? zeilen.join('') : '<div class="empty">Noch keine Fixkosten. Leg zum Beispiel Miete, Strom, Versicherung oder Kredit einmal an, mit Betrag und Tag im Monat.</div>'}</div>
+    ${S.nurLesen ? '' : `<div><button class="btn" data-a="fix-neu">+ Fixkosten hinzufügen</button></div>`}</div>`;
+}
+
+function budgets(R, kopf) {
+  const E = R.E; const w = R.dieseWoche;
+  const lm = R.bereiche.find(b => b.ausWoche);
+  const basis = S.mitErwartet ? R.uebrig : R.uebrigOhne;
+  let deckung = '';
+  if (basis == null) deckung = '<p class="small danger">Ob das Budget gedeckt ist, sehe ich erst mit einem Kontostand: Einstellungen → Konto &amp; Bargeld → Abgleichen.</p>';
+  else if (R.puffer >= 0) deckung = `<p class="small">${S.mitErwartet ? 'Das Wochenziel ist mit den erwarteten Eingängen gedeckt.' : 'Das Wochenziel ist mit dem Geld gedeckt, das schon da ist.'} Danach bleiben <b class="amt">${eur(R.puffer)}</b> als zusätzlicher Puffer.</p>`;
+  else deckung = `<p class="small danger">${S.mitErwartet ? 'Auch mit den erwarteten Eingängen' : 'Mit dem Geld, das schon da ist,'} fehlen <b class="amt">${eur(-R.puffer)}</b> für alle Budgets.</p>`;
+  return kopf('Platz für euren Alltag.', 'Eure Budgets und euer Sparbetrag.') + `
+  ${erwartetHinweis(R)}
+  <div class="card"><h2>Euer Einkaufsbudget pro Woche</h2>
+    <div><button class="chip ${S.mitErwartet ? 'on' : ''}" data-a="erwartet">${S.mitErwartet ? 'Mit erwarteten Einnahmen' : 'Nur Geld, das schon da ist'}</button></div>
+    <div class="big amt">${eur(E.wochenbudget)}<small> / Woche</small></div>
+    <div class="small" style="display:flex;flex-direction:column;gap:6px">
+      ${w ? `<p><b>Diese Woche geplant: ${eur(w.betrag)} für Einkäufe</b>${w.ausgegeben ? `, davon ${eur(w.ausgegeben)} ausgegeben` : ''}.</p>` : ''}
+      ${lm ? `<p class="muted">${eur(lm.budget)} eingeplant bis ${tm(E.zyklus.bis)} für ${esc(lm.name)}. Offene Zahlungen und der Sparbetrag sind berücksichtigt.</p>` : ''}
+      ${deckung}
+      ${S.mitErwartet && R.einOffen > 0 ? `<p class="muted">${eur(R.einOffen)} sind noch erwartet. Dieses Geld ist erst nach dem Eingang verfügbar.</p>` : ''}
+    </div>
+    <details class="how"><summary>So wird gerechnet</summary><div style="padding-top:8px">
+      <div class="kv"><span class="k">${S.mitErwartet ? 'Voraussichtlich übrig' : 'Jetzt da − offene Zahlungen − Sparen'}</span><span class="amt">${eurOderStrich(basis)}</span></div>
+      ${R.bereiche.map(b => `<div class="kv"><span class="k">− ${esc(b.name)}, noch frei</span><span class="amt">${eur(Math.max(0, b.frei))}</span></div>`).join('')}
+      <div class="kv total"><span class="k">= Puffer</span><span class="amt">${eurOderStrich(R.puffer)}</span></div>
+      <p class="small muted">Das Wochenbudget gilt für 7 Tage. Kürzere Wochen am Anfang und Ende des Zyklus bekommen ihren Anteil: Tage ÷ 7 × Wochenbudget.</p></div></details>
+    <label class="f" for="wochenbudget">Einkaufsbudget pro Woche (€)<input id="wochenbudget" class="amt-in" inputmode="decimal" value="${amtIn(E.wochenbudget)}" ${S.nurLesen ? 'disabled' : ''}></label>
+    ${S.nurLesen ? '' : `<div class="btn-row"><button class="btn primary" data-a="wochenbudget">Wochenbudget speichern</button></div>`}
+    <div class="weeks">${R.wochen.filter(x => !x.vorbei || x.ausgegeben).map(x => `<div class="week ${x.jetzt ? 'now' : ''}"><div style="min-width:0"><div class="wn">${x.jetzt ? 'Diese Woche' : 'Woche ' + x.nr}</div>
+      <div class="small muted">${tm(x.von)} – ${tm(x.bis)} · ${x.vorbei ? 'vorbei' : `noch ${x.nochTage} Tag${x.nochTage === 1 ? '' : 'e'}`}</div>
+      <div class="small muted amt">${eur(x.ausgegeben)} von ${eur(x.betrag)} ausgegeben</div>${x.jetzt && x.rest > 0 && x.nochTage > 0 ? `<div class="small amt">etwa ${eur(x.rest / x.nochTage)} pro Tag</div>` : ''}</div>
+      <div class="wa amt ${x.rest < 0 ? 'danger' : ''}">${eurS(x.rest)}</div></div>`).join('')}</div>
+    <p class="small muted">Neue Einkäufe, Einnahmen und Zahlungen ändern euren Wochenplan sofort.</p></div>
+  ${schnellKarte(R)}
+  <div class="card"><div class="card-h"><h2>Deine Alltagsbudgets</h2><span class="muted small amt">${eur(R.alltag)} genutzt</span></div>
+    <div>${budgetListe(R, true)}</div>
+    ${S.nurLesen ? '' : `<div><button class="btn" data-a="bereich-neu">+ Bereich hinzufügen</button></div>`}</div>
+  <div class="card"><div class="card-h"><h2>Zum Sparen einplanen</h2></div>
+    <label class="f" for="sparbetrag">Pro Gehaltszyklus (€)<input id="sparbetrag" class="amt-in" inputmode="decimal" value="${amtIn(E.sparbetrag)}" data-a="sparbetrag" ${S.nurLesen ? 'disabled' : ''}></label>
+    <p class="small muted">Dieser Betrag ist im Monatsplan fest reserviert.</p>
+    <label class="check"><input type="checkbox" id="spar-ueberwiesen" data-a="spar-ueberwiesen" ${E.sparUeberwiesen ? 'checked' : ''} ${S.nurLesen ? 'disabled' : ''}><span>Bereits auf das Sparkonto überwiesen</span></label>
+    <div class="kv"><span class="k">Gespart, bisher</span><b class="amt">${eur(E.gespartVorher + (E.sparUeberwiesen ? E.sparbetrag : 0))}${E.sparziel ? ` / ${eur(E.sparziel)}` : ''}</b></div>
+    ${E.sparziel > 0 ? `<div class="prog" role="img" aria-label="Sparziel zu ${Math.round(Math.min(100, (E.gespartVorher + (E.sparUeberwiesen ? E.sparbetrag : 0)) / E.sparziel * 100))} Prozent erreicht"><i style="width:${Math.min(100, (E.gespartVorher + (E.sparUeberwiesen ? E.sparbetrag : 0)) / E.sparziel * 100).toFixed(1)}%"></i></div>` : ''}
+    ${E.sparziel ? '' : '<p class="small muted">Ein Sparziel kannst du unter Einstellungen eintragen.</p>'}</div>
+  ${monatsplan(R)}`;
+}
+
+function verlauf(R, kopf) {
+  const tage = {};
+  [...R.aus].sort((a, b) => b.datum.localeCompare(a.datum) || String(b.erstellt).localeCompare(String(a.erstellt))).forEach(b => { (tage[b.datum] = tage[b.datum] || []).push(b); });
+  const bnamen = Object.fromEntries(bereiche().map(b => [b.id, b.name]));
+  const zyk = [...S.zyklen].sort((a, b) => String(b.von).localeCompare(String(a.von)));
+  const balken = (liste) => { const max = Math.max(...liste.map(x => x.s), 0.01); return `<div class="hbars">${liste.map(x => `<div class="hbar"><span class="nm" title="${esc(x.name)}">${esc(x.name)}</span><div class="prog"><i style="width:${(x.s / max * 100).toFixed(1)}%"></i></div><b class="amt">${eur(x.s)}</b></div>`).join('')}</div>`; };
+  const personen = ['p1', 'p2'].map(p => { const a = R.aus.filter(b => (b.von || 'p1') === p); return { name: `${name(p)} · ${a.length}×`, s: summe(a) }; });
+  const proBereich = R.bereiche.filter(b => b.ausgegeben > 0).map(b => ({ name: b.name, s: b.ausgegeben })).sort((a, b) => b.s - a.s);
+  const orte = {}; R.aus.filter(b => (b.titel || '').trim()).forEach(b => { const k = b.titel.trim().toLowerCase(); (orte[k] = orte[k] || { name: b.titel.trim(), s: 0, n: 0 }); orte[k].s += Number(b.betrag) || 0; orte[k].n++; });
+  const topOrte = Object.values(orte).sort((a, b) => b.s - a.s).slice(0, 5).map(o => ({ name: `${o.name} · ${o.n}×`, s: r2(o.s) }));
+  return kopf('Euer Ausgabenverlauf.', 'Alle Alltagsausgaben in diesem Gehaltszyklus.') + `
+  ${R.aus.length ? `<div class="card"><h2>Wer gibt wofür aus?</h2>
+    <div><h3 style="padding-bottom:8px">Nach Person</h3>${balken(personen)}</div>
+    ${proBereich.length ? `<div><h3 style="padding-bottom:8px">Nach Bereich</h3>${balken(proBereich)}</div>` : ''}
+    ${topOrte.length ? `<div><h3 style="padding-bottom:8px">Wo am meisten</h3>${balken(topOrte)}</div>` : ''}</div>` : ''}
+  <div class="card"><div class="card-h"><h2>Ausgaben in diesem Zyklus</h2><b class="amt">${eur(R.alltag)}</b></div>
+    ${Object.keys(tage).length ? Object.entries(tage).map(([d, bs]) => `<div><div class="small muted" style="padding-top:6px">${tmj(d)} · ${eur(summe(bs))}</div><div class="rows">${bs.map(b => `
+      <div class="row tap" data-a="bearbeiten" data-id="${esc(b.id)}" role="button" tabindex="0"><div class="l"><div class="tx"><div class="tt">${esc(b.titel || bnamen[b.bereich] || 'Ausgabe')}</div><div class="sub">${esc(bnamen[b.bereich] || 'gelöschter Bereich')}${b.von ? ' · ' + esc(name(b.von)) : ''} · ${b.quelle === 'bar' ? 'bar' : 'Konto'}</div></div></div>
+      <div class="r amt"><b>${eur(b.betrag)}</b></div></div>`).join('')}</div></div>`).join('') : '<p class="muted">Noch keine Ausgaben eingetragen.</p>'}</div>
+  <div class="card"><div class="card-h"><h2>Abgeschlossene Monate</h2></div>
+    ${zyk.length ? `<div class="rows">${zyk.map(z => `<div class="row tap" data-a="zyklus-bearbeiten" data-id="${esc(z.id)}" role="button" tabindex="0"><div class="l"><div class="tx"><div class="tt">${tm(z.von)} – ${tmj(z.bis)}</div>
+      <div class="sub amt">Einnahmen ${eur(z.einnahmen)} · Rechnungen ${eur(z.rechnungen)} · Alltag ${eur(z.alltag)}${z.gespart ? ' · gespart ' + eur(z.gespart) : ''}</div>${z.notiz ? `<div class="sub">${esc(z.notiz)}</div>` : ''}</div></div>
+      <div class="r"><div class="sub">Endstand</div><b class="amt">${eurOderStrich(z.endstand)}</b></div></div>`).join('')}</div>` : '<p class="muted">Noch keine abgeschlossenen Monate.</p>'}</div>`;
+}
+
+function einstellungen(R, kopf) {
+  const E = R.E; const dis = S.nurLesen ? 'disabled' : '';
+  return kopf('Eure Einstellungen.', 'Namen, Gehaltszyklus, Kontostand und Sicherung.') + `
+  <form class="card" id="form-haushalt"><h2>Euer Haushalt</h2>
+    <div class="grid2"><label class="f" for="e-p1">Dein Name<input id="e-p1" type="text" value="${esc(E.namen.p1)}" ${dis}></label>
+      <label class="f" for="e-p2">Name deiner Frau<input id="e-p2" type="text" value="${esc(E.namen.p2)}" ${dis}></label>
+      <label class="f" for="e-von">Zyklus beginnt<input id="e-von" type="date" value="${E.zyklus.von}" ${dis}></label>
+      <label class="f" for="e-bis">Zyklus endet<input id="e-bis" type="date" value="${E.zyklus.bis}" ${dis}></label>
+      <label class="f" for="e-ziel">Sparziel (€)<input id="e-ziel" class="amt-in" inputmode="decimal" value="${amtIn(E.sparziel)}" ${dis}></label>
+      <label class="f" for="e-vorher">Schon gespart, vor diesem Zyklus (€)<input id="e-vorher" class="amt-in" inputmode="decimal" value="${amtIn(E.gespartVorher)}" ${dis}></label></div>
+    ${S.nurLesen ? '' : '<div class="btn-row"><button class="btn primary" type="submit">Speichern</button></div>'}</form>
+  <div class="card"><div class="card-h"><h2>Konto &amp; Bargeld</h2>${S.nurLesen ? '' : '<button class="btn" data-a="abgleichen">Abgleichen</button>'}</div>
+    <div><div class="kv"><span class="k">Konto jetzt</span><span class="amt">${eurOderStrich(R.konto)}</span></div>
+    <div class="kv"><span class="k">Bargeld jetzt</span><span class="amt">${eurOderStrich(R.bar)}</span></div>
+    <div class="kv total"><span class="k">Zusammen</span><span class="amt">${eurOderStrich(R.jetzt)}</span></div></div>
+    <p class="small muted">${E.abgleich ? `Letzter Abgleich ${zeitpunkt(E.abgleich.am)}: Konto ${eur(E.abgleich.konto)}, Bargeld ${eur(E.abgleich.bar)}. Alles, was ihr danach als bezahlt, eingegangen oder ausgegeben eintragt, rechnet die Seite dazu. Schau ab und zu auf die Bank-App und gleich hier ab.` : 'Trag einmal ein, was gerade auf dem Konto und in der Geldbörse ist. Ab dann rechnet die Seite mit.'}</p></div>
+  <div class="card"><h2>Zyklus abschließen</h2>
+    <p class="small muted">Am Ende des Gehaltszyklus: speichert die Zahlen dieses Zyklus unter „Verlauf“ und stellt den nächsten Zyklus ein (${tmj(plusTage(E.zyklus.bis, 1))} – ${tmj(naechstesEnde(E))}). Die Buchungen bleiben erhalten. Eure Fixkosten werden für den neuen Zyklus als Zahlungen übernommen, Einnahmen mit „Kommt jeden Monat“ als erwartet (Betrag bitte prüfen).</p>
+    ${S.nurLesen ? '' : `<div id="abschluss-box"><button class="btn" data-a="abschluss-frage">Zyklus abschließen …</button></div>`}</div>
+  <div class="card"><h2>Sicherung</h2>
+    <p class="small muted">Eure Daten liegen <b>nur auf diesem Gerät</b>. Lade ab und zu eine Sicherung herunter, zum Beispiel einmal im Monat beim Zyklus-Abschluss. Geht das Handy verloren, ist sonst alles weg.</p>
+    <div class="btn-row" style="justify-content:flex-start"><button class="btn primary" data-a="sicherung">Sicherung herunterladen</button><button class="btn" data-a="tabelle">Als Tabelle für Excel</button></div>
+    ${E.letzteSicherung ? `<p class="small muted">Letzte Sicherung: ${zeitpunkt(E.letzteSicherung)}</p>` : '<p class="small warn-text">Noch keine Sicherung heruntergeladen.</p>'}
+    <h3 style="padding-top:6px">Sicherung einspielen</h3>
+    <p class="small muted">Holt alle Daten aus einer Sicherungs-Datei auf dieses Gerät, zum Beispiel vom alten Haushaltsbuch. <b>Ersetzt</b> alles, was jetzt hier steht.</p>
+    ${S.importVorschau ? `<div class="banner info"><b>In der Datei:</b> ${S.importVorschau.text}<div class="btn-row" style="justify-content:flex-start;padding-top:10px"><button class="btn primary" data-a="import-ja">Jetzt einspielen</button><button class="btn" data-a="import-nein">Abbrechen</button></div></div>`
+      : `<div><label class="btn foto-btn" for="import-datei">Datei auswählen …</label><input type="file" id="import-datei" class="vh" accept=".json,application/json,text/plain"></div>`}
+    ${S.importFehler ? `<p class="small danger">${esc(S.importFehler)}</p>` : ''}</div>`;
+}
+function naechstesEnde(E) {
+  const von = ausIso(plusTage(E.zyklus.bis, 1));
+  const tag = ausIso(E.zyklus.von).getDate();
+  const d = new Date(von.getFullYear(), von.getMonth() + 1, 1, 12);
+  d.setDate(Math.min(tag, tageImMonat(d.getFullYear(), d.getMonth() + 1)));
+  d.setDate(d.getDate() - 1);
+  return isoTag(d);
+}
+
+/* ───────── Eingabefenster ───────── */
+function oeffne(html, onSubmit) {
+  const v = $('#veil');
+  v.innerHTML = `<form class="sheet" id="sheet" novalidate>${html}<p class="small danger" id="f-fehler" hidden></p></form>`;
+  v.hidden = false;
+  const form = $('#sheet');
+  form.addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const fehler = $('#f-fehler'); fehler.hidden = true;
+    const btn = form.querySelector('button[type="submit"]'); if (btn) btn.disabled = true;
+    const msg = await onSubmit(form);
+    if (btn) btn.disabled = false;
+    if (msg) { fehler.textContent = msg; fehler.hidden = false; }
+  });
+  setTimeout(() => { const f = form.querySelector('input:not([type="checkbox"]):not([type="date"])'); if (f && matchMedia('(pointer:fine)').matches) f.focus(); }, 30);
+}
+function schliesse() { const v = $('#veil'); v.hidden = true; v.innerHTML = ''; if (S.renderOffen) render(); }
+const seg = (id, werte, aktiv) => `<div class="seg" role="group" id="${id}">${werte.map(([v, t]) => `<button type="button" data-seg="${id}" data-v="${v}" aria-pressed="${v === aktiv}">${t}</button>`).join('')}</div>`;
+const segWert = id => $(`#${id} [aria-pressed="true"]`)?.dataset.v;
+const fuss = (loeschen) => `<div class="btn-row" style="justify-content:space-between">${loeschen ? `<button type="button" class="btn danger-btn" data-a="loeschen-frage">Löschen</button>` : '<span></span>'}<span class="btn-row"><button type="button" class="btn" data-a="schliessen">Abbrechen</button><button type="submit" class="btn primary">Speichern</button></span></div>`;
+
+function buchungFenster(art, b) {
+  const E = einst(); const neu = !b;
+  b = b || { art, datum: heute(), quelle: 'konto', von: vonWahl(), erledigt: art === 'ausgabe', bereich: 'lebensmittel' };
+  art = b.art;
+  const titel = { ausgabe: neu ? 'Neue Ausgabe' : 'Ausgabe', zahlung: neu ? 'Neue Zahlung' : 'Zahlung', einnahme: neu ? 'Neue Einnahme' : 'Einnahme' }[art];
+  const bs = bereiche();
+  oeffne(`<h2>${titel}</h2>
+    <label class="f" for="f-betrag">Betrag (€)<input id="f-betrag" class="amt-in" inputmode="decimal" placeholder="0,00" value="${amtIn(b.betrag)}" required></label>
+    ${art === 'ausgabe' ? `<div class="f">Bereich (antippen zum Ändern)${seg('f-bereich', bs.map(x => [x.id, esc(x.name)]), bs.some(x => x.id === b.bereich) ? b.bereich : bs[0]?.id)}</div>` : ''}
+    <label class="f" for="f-titel">${art === 'ausgabe' ? 'Wofür? (freiwillig)' : 'Bezeichnung'}<input id="f-titel" type="text" value="${esc(b.titel || '')}" placeholder="${art === 'ausgabe' ? 'z. B. Billa' : art === 'zahlung' ? 'z. B. Strom Wien Energie' : 'z. B. Lohn November'}" ${art === 'ausgabe' ? '' : 'required'}></label>
+    <div class="grid2"><label class="f" for="f-datum">${art === 'zahlung' ? 'Fällig am' : art === 'einnahme' ? 'Kommt am' : 'Datum'}<input id="f-datum" type="date" value="${b.datum}" required></label>
+      <div class="f">${art === 'einnahme' ? 'Geht auf' : 'Bezahlt mit'}${seg('f-quelle', [['konto', art === 'einnahme' ? 'Konto' : 'Konto / Karte'], ['bar', 'Bar']], b.quelle || 'konto')}</div></div>
+    <div class="f">Erfasst von${seg('f-von', [['p1', esc(E.namen.p1)], ['p2', esc(E.namen.p2)]], b.von || vonWahl())}</div>
+    ${art !== 'ausgabe' ? `<label class="check"><input type="checkbox" id="f-erledigt" ${b.erledigt ? 'checked' : ''}><span>${art === 'einnahme' ? 'Ist schon eingegangen' : 'Ist schon bezahlt'}</span></label>` : ''}
+    ${art === 'einnahme' ? `<label class="check"><input type="checkbox" id="f-monatlich" ${b.monatlich ? 'checked' : ''}><span>Kommt jeden Monat (beim neuen Zyklus wieder als erwartet anlegen)</span></label>` : ''}
+    ${b.vomVormonat ? '<p class="small warn-text">Der Betrag ist vom Vormonat übernommen. Bitte mit dem Lohnzettel vergleichen und speichern.</p>' : ''}
+    ${b.fixId ? '<p class="small muted">Aus den Fixkosten übernommen.</p>' : ''}
+    ${fuss(!neu)}`, async form => {
+      const betrag = parseEuro($('#f-betrag').value);
+      if (!(betrag > 0)) return 'Bitte einen Betrag über 0 eintragen, z. B. 12,50.';
+      const t = $('#f-titel').value.trim();
+      if (art !== 'ausgabe' && !t) return 'Bitte eine Bezeichnung eintragen.';
+      const datum = $('#f-datum').value; if (!/^\d{4}-\d{2}-\d{2}$/.test(datum)) return 'Bitte ein Datum wählen.';
+      const erledigt = art === 'ausgabe' ? true : $('#f-erledigt').checked;
+      const daten = { ...stripMeta(b), art, betrag, titel: t, datum, quelle: segWert('f-quelle') || 'konto', von: segWert('f-von') || vonWahl(), erledigt, geaendert: jetztIso() };
+      if (art === 'ausgabe') daten.bereich = segWert('f-bereich') || 'sonstiges';
+      if (art === 'einnahme') { daten.monatlich = $('#f-monatlich').checked; daten.vomVormonat = false; }
+      if (erledigt && (neu || !b.erledigt)) daten.erledigtAm = jetztIso();
+      if (!erledigt) daten.erledigtAm = null;
+      if (neu) daten.erstellt = jetztIso();
+      const ok = await schreiben(() => (neu ? S.db.collection('buchungen').doc() : S.db.doc('buchungen/' + b.id)).set(daten), neu ? `${titel.replace('Neue ', '')} gespeichert` : 'Gespeichert');
+      if (ok) schliesse(); return ok ? '' : 'Nicht gespeichert. Bitte nochmal versuchen.';
+    });
+  $('#sheet').dataset.loeschen = neu ? '' : 'buchungen/' + b.id;
+}
+function stripMeta(o) { const { id, ...rest } = o || {}; return rest; }
+
+function fixFenster(f) {
+  const neu = !f; const E = einst();
+  f = f || { tag: 1, rhythmus: 1, kategorie: 'Wohnen', quelle: 'konto', aktiv: true, startMonat: E.zyklus.von.slice(0, 7) };
+  oeffne(`<h2>${neu ? 'Neue Fixkosten' : 'Fixkosten'}</h2>
+    <label class="f" for="f-titel">Bezeichnung<input id="f-titel" type="text" value="${esc(f.titel || '')}" placeholder="z. B. Miete, Wiener Linien, Kredit" required></label>
+    <div class="grid2"><label class="f" for="f-betrag">Betrag (€)<input id="f-betrag" class="amt-in" inputmode="decimal" placeholder="0,00" value="${amtIn(f.betrag)}" required></label>
+      <label class="f" for="f-tag">Tag im Monat<input id="f-tag" type="number" min="1" max="31" inputmode="numeric" value="${Number(f.tag) || 1}"></label></div>
+    <label class="f" for="f-rhythmus">Wie oft?<select id="f-rhythmus">${Object.entries(RHYTHMUS).map(([v, t]) => `<option value="${v}" ${Number(f.rhythmus) === Number(v) ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
+    <label class="f" for="f-start" id="f-start-wrap" ${Number(f.rhythmus) > 1 ? '' : 'hidden'}>Zuerst fällig im Monat<input id="f-start" type="month" value="${esc(f.startMonat || E.zyklus.von.slice(0, 7))}"></label>
+    <label class="f" for="f-kat">Kategorie<select id="f-kat">${KATEGORIEN.map(k => `<option ${k === f.kategorie ? 'selected' : ''}>${k}</option>`).join('')}</select></label>
+    <div class="f">Bezahlt mit${seg('f-quelle', [['konto', 'Konto / Karte'], ['bar', 'Bar']], f.quelle || 'konto')}</div>
+    <label class="check"><input type="checkbox" id="f-aktiv" ${f.aktiv !== false ? 'checked' : ''}><span>Aktiv (läuft noch)</span></label>
+    <p class="small muted">${neu ? 'Wird gleich als Zahlung für diesen Zyklus übernommen, wenn sie in diesem Zyklus fällig ist.' : 'Änderungen gelten auch für die offene Zahlung dieses Zyklus. Löschen entfernt die offene Zahlung dieses Zyklus mit; bezahlte bleiben im Verlauf.'}</p>
+    ${fuss(!neu)}`, async () => {
+      const betrag = parseEuro($('#f-betrag').value);
+      if (!(betrag > 0)) return 'Bitte einen Betrag über 0 eintragen.';
+      const titel = $('#f-titel').value.trim(); if (!titel) return 'Bitte eine Bezeichnung eintragen.';
+      const tag = Math.min(31, Math.max(1, parseInt($('#f-tag').value, 10) || 1));
+      const rhythmus = Number($('#f-rhythmus').value) || 1;
+      const startMonat = rhythmus > 1 && /^\d{4}-\d{2}$/.test($('#f-start').value) ? $('#f-start').value : E.zyklus.von.slice(0, 7);
+      const daten = { ...stripMeta(f), titel, betrag, tag, rhythmus, startMonat, kategorie: $('#f-kat').value, quelle: segWert('f-quelle') || 'konto', aktiv: $('#f-aktiv').checked, geaendert: jetztIso() };
+      const ref = neu ? S.db.collection('fixkosten').doc() : S.db.doc('fixkosten/' + f.id);
+      const datumGeaendert = !neu && (Number(f.tag) !== tag || Number(f.rhythmus) !== rhythmus || f.startMonat !== startMonat);
+      let n = 0;
+      const ok = await schreiben(async () => { await ref.set(daten); n = await fixInZyklus({ ...daten, id: ref.id }, einst(), datumGeaendert); });
+      if (ok) { schliesse(); toast(neu ? (n ? 'Gespeichert und für diesen Zyklus übernommen' : 'Fixkosten gespeichert') : 'Fixkosten geändert'); }
+      return ok ? '' : 'Nicht gespeichert.';
+    });
+  $('#sheet').dataset.loeschen = neu ? '' : 'fix:' + f.id;
+  $('#f-rhythmus').addEventListener('change', e => { $('#f-start-wrap').hidden = Number(e.target.value) <= 1; });
+}
+
+function bereichFenster(b, danach) {
+  const neu = !b;
+  oeffne(`<h2>${neu ? 'Neuer Bereich' : 'Bereich'}</h2>
+    <label class="f" for="f-titel">Name<input id="f-titel" type="text" value="${esc(b?.name || '')}" placeholder="z. B. Gesundheit & Apotheke, Drogerie, Auto" required></label>
+    <label class="f" for="f-betrag">Budget pro Zyklus (€, leer lassen = kein Budget)<input id="f-betrag" class="amt-in" inputmode="decimal" value="${b && b.budget ? amtIn(b.budget) : ''}" placeholder="kein Budget"></label>
+    ${fuss(!neu)}`, async () => {
+      const n = $('#f-titel').value.trim(); if (!n) return 'Bitte einen Namen eintragen.';
+      const raw = $('#f-betrag').value.trim(); const budget = raw ? parseEuro(raw) : 0;
+      if (!(budget >= 0)) return 'Bitte ein Budget von 0 oder mehr eintragen.';
+      const pos = neu ? Math.max(0, ...bereiche().map(x => x.pos || 0)) + 1 : (b.pos ?? 99);
+      const ref = neu ? S.db.collection('bereiche').doc() : S.db.doc('bereiche/' + b.id);
+      const ok = await schreiben(() => ref.set({ ...stripMeta(b || {}), name: n, budget, pos, geloescht: false, geaendert: jetztIso() }), 'Bereich gespeichert');
+      if (ok) { schliesse(); if (danach) danach(ref.id); } return ok ? '' : 'Nicht gespeichert.';
+    });
+  $('#sheet').dataset.loeschen = neu ? '' : 'bereich:' + b.id;
+}
+
+function abgleichFenster() {
+  const R = rechnen();
+  oeffne(`<h2>Konto &amp; Bargeld abgleichen</h2>
+    <p class="small muted">Trag ein, was <b>jetzt gerade</b> da ist: Konto laut Bank-App, Bargeld laut Geldbörse. Ab jetzt rechnet die Seite von diesem Stand aus weiter.</p>
+    <div class="grid2"><label class="f" for="f-konto">Konto jetzt (€)<input id="f-konto" class="amt-in" inputmode="decimal" value="${amtIn(R.konto)}" placeholder="0,00"></label>
+      <label class="f" for="f-bar">Bargeld jetzt (€)<input id="f-bar" class="amt-in" inputmode="decimal" value="${amtIn(R.bar)}" placeholder="0,00"></label></div>
+    ${fuss(false)}`, async () => {
+      const konto = parseEuro($('#f-konto').value), bar = $('#f-bar').value.trim() ? parseEuro($('#f-bar').value) : 0;
+      if (!isFinite(konto)) return 'Bitte den Kontostand eintragen (darf auch minus sein, z. B. -120,50).';
+      if (!isFinite(bar) || bar < 0) return 'Bitte das Bargeld eintragen (0 oder mehr).';
+      const ok = await einstAendern({ abgleich: { konto, bar, am: jetztIso() } }, 'Abgeglichen');
+      if (ok) schliesse(); return ok ? '' : 'Nicht gespeichert.';
+    });
+}
+
+function zyklusFenster(z) {
+  const neu = !z; z = z || {};
+  oeffne(`<h2>${neu ? 'Abgeschlossenen Monat hinzufügen' : 'Abgeschlossener Monat'}</h2>
+    <p class="small muted">Für Monate von früher: die Zahlen von eurem alten Haushaltsbuch oder vom Kontoauszug übertragen.</p>
+    <div class="grid2"><label class="f" for="z-von">Von<input id="z-von" type="date" value="${esc(z.von || '')}" required></label>
+      <label class="f" for="z-bis">Bis<input id="z-bis" type="date" value="${esc(z.bis || '')}" required></label>
+      <label class="f" for="z-ein">Einnahmen (€)<input id="z-ein" class="amt-in" inputmode="decimal" value="${amtIn(z.einnahmen)}"></label>
+      <label class="f" for="z-rech">Rechnungen (€)<input id="z-rech" class="amt-in" inputmode="decimal" value="${amtIn(z.rechnungen)}"></label>
+      <label class="f" for="z-all">Alltag (€)<input id="z-all" class="amt-in" inputmode="decimal" value="${amtIn(z.alltag)}"></label>
+      <label class="f" for="z-spar">Gespart (€)<input id="z-spar" class="amt-in" inputmode="decimal" value="${amtIn(z.gespart)}"></label></div>
+    <label class="f" for="z-end">Endstand Konto + Bargeld (€, wenn bekannt)<input id="z-end" class="amt-in" inputmode="decimal" value="${amtIn(z.endstand)}"></label>
+    <label class="f" for="z-notiz">Notiz<input id="z-notiz" type="text" value="${esc(z.notiz || '')}"></label>
+    ${fuss(!neu)}`, async () => {
+      const von = $('#z-von').value, bis = $('#z-bis').value;
+      if (!von || !bis || bis < von) return 'Bitte Von und Bis eintragen (Bis nach Von).';
+      const zahl = id => { const s = $(id).value.trim(); return s ? parseEuro(s) : null; };
+      const w = { einnahmen: zahl('#z-ein'), rechnungen: zahl('#z-rech'), alltag: zahl('#z-all'), gespart: zahl('#z-spar'), endstand: zahl('#z-end') };
+      if (Object.values(w).some(v => v !== null && !isFinite(v))) return 'Ein Betrag ist nicht lesbar. Bitte so schreiben: 1234,56';
+      const ref = neu ? S.db.collection('zyklen').doc() : S.db.doc('zyklen/' + z.id);
+      const ok = await schreiben(() => ref.set({ ...stripMeta(z), von, bis, ...w, notiz: $('#z-notiz').value.trim(), geaendert: jetztIso() }), 'Monat gespeichert');
+      if (ok) schliesse(); return ok ? '' : 'Nicht gespeichert.';
+    });
+  $('#sheet').dataset.loeschen = neu ? '' : 'zyklen/' + z.id;
+}
+
+/* ───────── Aktionen ───────── */
+async function erledigtUmschalten(id, an) {
+  const b = S.buchungen.find(x => x.id === id); if (!b) return;
+  await schreiben(() => S.db.doc('buchungen/' + id).update({ erledigt: an, erledigtAm: an ? jetztIso() : null, geaendert: jetztIso() }),
+    an ? (b.art === 'einnahme' ? `${b.titel} eingegangen` : `${b.titel} bezahlt`) : 'Zurückgesetzt');
+}
+/* Eine Fixkosten-Zeile in einen Zyklus bringen: fehlende Zahlung anlegen, offene angleichen */
+async function fixInZyklus(f, E, datumGeaendert) {
+  const st = fixStand(f, E); let n = 0;
+  for (const b of st.linked) {
+    if (b.erledigt) continue;
+    if (!st.dats.length) { if (b.fixId === f.id) await S.db.doc('buchungen/' + b.id).delete(); continue; }
+    const patch = {};
+    if (b.fixId !== f.id) patch.fixId = f.id;
+    if (b.titel !== f.titel) patch.titel = f.titel;
+    if (r2(b.betrag) !== r2(f.betrag)) patch.betrag = r2(f.betrag);
+    if ((b.quelle || 'konto') !== (f.quelle || 'konto')) patch.quelle = f.quelle || 'konto';
+    if (datumGeaendert && st.dats.length === 1 && b.datum !== st.dats[0]) patch.datum = st.dats[0];
+    if (Object.keys(patch).length) await S.db.doc('buchungen/' + b.id).update({ ...patch, geaendert: jetztIso() });
+  }
+  for (const d of st.fehlend) {
+    await S.db.collection('buchungen').doc().set({ art: 'zahlung', titel: f.titel, betrag: r2(f.betrag), datum: d, quelle: f.quelle || 'konto', fixId: f.id, von: vonWahl(), erledigt: false, erledigtAm: null, erstellt: jetztIso(), geaendert: jetztIso() });
+    n++;
+  }
+  return n;
+}
+async function fixUebernehmen() {
+  const E = einst(); let n = 0;
+  const ok = await schreiben(async () => { for (const f of S.fix) n += await fixInZyklus(f, E, false); });
+  if (ok) toast(n ? `${n} Zahlung${n === 1 ? '' : 'en'} übernommen` : 'Alles schon übernommen');
+}
+async function zyklusAbschliessen() {
+  const R = rechnen(); const E = R.E;
+  const neuVon = plusTage(E.zyklus.bis, 1), neuBis = naechstesEnde(E);
+  let n = 0, nEin = 0;
+  const ok = await schreiben(async () => {
+    await S.db.collection('zyklen').doc().set({ von: E.zyklus.von, bis: E.zyklus.bis, einnahmen: R.einErhalten, rechnungen: R.zahBezahlt, alltag: R.alltag, gespart: R.sparErledigt, endstand: R.jetzt, offenUebernommen: R.zahOffen, notiz: R.zahOffen ? `${eur(R.zahOffen)} Zahlungen waren noch offen` : '', geaendert: jetztIso() });
+    const snap = await einstRef().get();
+    const alt = snap.exists ? snap.data() : {};
+    await einstRef().set({ ...alt, zyklus: { von: neuVon, bis: neuBis }, gespartVorher: r2((Number(alt.gespartVorher) || 0) + R.sparErledigt), sparUeberwiesen: false, sparAm: null, geaendert: jetztIso() });
+    const E2 = { zyklus: { von: neuVon, bis: neuBis } };
+    for (const f of S.fix) n += await fixInZyklus(f, E2, false);
+    for (const b of R.ein.filter(b => b.monatlich)) {
+      let datum = plusMonat(b.datum);
+      if (datum < neuVon || datum > neuBis) continue;
+      const titel = b.titel.replace(MONAT_RE, MONATE[Number(datum.slice(5, 7)) - 1]);
+      if (S.buchungen.some(x => x.art === 'einnahme' && x.datum >= neuVon && x.datum <= neuBis && gleicherName(x.titel, titel))) continue;
+      await S.db.collection('buchungen').doc().set({ art: 'einnahme', titel, betrag: r2(b.betrag), datum, quelle: b.quelle || 'konto', von: b.von || vonWahl(), monatlich: true, vomVormonat: true, erledigt: false, erledigtAm: null, erstellt: jetztIso(), geaendert: jetztIso() });
+      nEin++;
+    }
+  });
+  if (ok) { toast(`Neuer Zyklus: ${tm(neuVon)} – ${tmj(neuBis)} · ${n} Fixkosten${nEin ? `, ${nEin} Einnahme${nEin === 1 ? '' : 'n'}` : ''} übernommen`); location.hash = '#uebersicht'; }
+}
+async function sicherung() {
+  if (!S.downloads) return;
+  const daten = { exportiert: jetztIso(), einstellungen: S.einst, buchungen: S.buchungen, fixkosten: S.fix, bereiche: S.bereiche, zyklen: S.zyklen };
+  try { await S.downloads.save({ filename: `haushaltsbuch-${heute()}.json`, data: JSON.stringify(daten, null, 2) }); await einstAendern({ letzteSicherung: jetztIso() }, 'Sicherung gespeichert'); }
+  catch (e) { if (e?.code !== 'declined') toast('Herunterladen hat nicht geklappt.'); }
+}
+async function tabelle() {
+  if (!S.downloads) return;
+  const bnamen = Object.fromEntries(bereiche().map(b => [b.id, b.name]));
+  const zelle = v => { const t = String(v ?? ''); return /[";\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; };
+  const art = { einnahme: 'Einnahme', zahlung: 'Zahlung', ausgabe: 'Alltag' };
+  const status = b => b.art === 'einnahme' ? (b.erledigt ? 'eingegangen' : 'erwartet') : b.art === 'zahlung' ? (b.erledigt ? 'bezahlt' : 'offen') : 'ausgegeben';
+  const zeilen = [['Datum', 'Art', 'Bezeichnung', 'Bereich', 'Betrag (EUR)', 'Status', 'Bezahlt mit', 'Erfasst von']];
+  [...S.buchungen].sort((a, b) => a.datum.localeCompare(b.datum)).forEach(b => zeilen.push([tmj(b.datum), art[b.art] || b.art, b.titel || '', b.art === 'ausgabe' ? (bnamen[b.bereich] || '') : '', (b.art === 'einnahme' ? 1 : -1) * r2(b.betrag), status(b), b.quelle === 'bar' ? 'Bar' : 'Konto/Karte', b.von ? name(b.von) : '']));
+  const csv = '\ufeff' + zeilen.map(z => z.map((v, i) => i === 4 && typeof v === 'number' ? v.toFixed(2).replace('.', ',') : zelle(v)).join(';')).join('\r\n');
+  try { await S.downloads.save({ filename: `haushaltsbuch-${heute()}.csv`, data: csv }); toast('Tabelle gespeichert'); }
+  catch (e) { if (e?.code !== 'declined') toast('Herunterladen hat nicht geklappt.'); }
+}
+function importPruefen(inhalt) {
+  let d; try { d = JSON.parse(inhalt); } catch { throw 'Die Datei ist keine Sicherung (kein gültiges Format).'; }
+  if (!d || typeof d !== 'object' || !Array.isArray(d.buchungen)) throw 'In der Datei sind keine Buchungen. Ist das die richtige Sicherung?';
+  const karte = {}; let uebersprungen = 0;
+  const idOk = id => typeof id === 'string' && /^[A-Za-z0-9_\-.~:@+]{1,200}$/.test(id) && id !== '.' && id !== '..';
+  const nimm = (sammlung, liste, gueltig) => (Array.isArray(liste) ? liste : []).forEach(x => {
+    if (!x || typeof x !== 'object' || !idOk(x.id) || !gueltig(x)) { uebersprungen++; return; }
+    const { id, ...rest } = x; karte[`${sammlung}/${id}`] = rest;
+  });
+  nimm('buchungen', d.buchungen, b => ['einnahme', 'zahlung', 'ausgabe'].includes(b.art) && typeof b.datum === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(b.datum) && isFinite(Number(b.betrag)));
+  nimm('fixkosten', d.fixkosten, f => typeof f.titel === 'string' && isFinite(Number(f.betrag)));
+  nimm('bereiche', d.bereiche, b => typeof b.name === 'string');
+  nimm('zyklen', d.zyklen, z => typeof z.von === 'string' && typeof z.bis === 'string');
+  if (d.einstellungen && typeof d.einstellungen === 'object') karte['haushalt/einstellungen'] = d.einstellungen;
+  const n = pre => Object.keys(karte).filter(k => k.startsWith(pre + '/')).length;
+  const e = d.einstellungen || {};
+  const text = `${n('buchungen')} Buchungen, ${n('fixkosten')} Fixkosten, ${n('bereiche')} eigene Bereiche, ${n('zyklen')} abgeschlossene Monate`
+    + (e.namen ? ` · ${esc(e.namen.p1 || '')} &amp; ${esc(e.namen.p2 || '')}` : '')
+    + (e.zyklus && e.zyklus.von && e.zyklus.bis ? ` · Zyklus ${tm(e.zyklus.von)} – ${tmj(e.zyklus.bis)}` : '')
+    + (uebersprungen ? ` · ${uebersprungen} unlesbare Einträge werden ausgelassen` : '') + '.';
+  return { karte, text };
+}
+async function loeschen(ziel) {
+  if (!ziel) return;
+  let ok;
+  if (ziel.startsWith('fix:')) {
+    const id = ziel.slice(4); const E = einst();
+    ok = await schreiben(async () => {
+      for (const b of S.buchungen.filter(b => b.fixId === id && !b.erledigt && b.datum >= E.zyklus.von && b.datum <= E.zyklus.bis)) await S.db.doc('buchungen/' + b.id).delete();
+      await S.db.doc('fixkosten/' + id).delete();
+    }, 'Fixkosten gelöscht');
+  } else if (ziel.startsWith('bereich:')) {
+    const id = ziel.slice(8); const b = bereiche().find(x => x.id === id);
+    ok = await schreiben(() => S.db.doc('bereiche/' + id).set({ ...stripMeta(b || {}), geloescht: true, geaendert: jetztIso() }), 'Bereich gelöscht');
+  } else ok = await schreiben(() => S.db.doc(ziel).delete(), 'Gelöscht');
+  if (ok) schliesse();
+}
+
+document.addEventListener('click', async ev => {
+  const segB = ev.target.closest('[data-seg]');
+  if (segB) { document.querySelectorAll(`[data-seg="${segB.dataset.seg}"]`).forEach(x => x.setAttribute('aria-pressed', x === segB)); return; }
+  if (ev.target.id === 'veil') return schliesse();
+  const el = ev.target.closest('[data-a]'); if (!el) return;
+  const a = el.dataset.a; const id = el.dataset.id;
+  if (el.matches('input[type="checkbox"]')) return;   // Häkchen laufen über "change"
+  if (a === 'neu') return buchungFenster(el.dataset.art);
+  if (a === 'bearbeiten') { const b = S.buchungen.find(x => x.id === id); if (b) buchungFenster(b.art, b); return; }
+  if (a === 'fix-neu') return fixFenster();
+  if (a === 'fix-bearbeiten') { const f = S.fix.find(x => x.id === id); if (f) fixFenster(f); return; }
+  if (a === 'fix-uebernehmen') { el.disabled = true; await fixUebernehmen(); return; }
+  if (a === 'bereich-neu') return bereichFenster();
+  if (a === 'bereich-bearbeiten') { const b = bereiche().find(x => x.id === id); if (b) bereichFenster(b); return; }
+  if (a === 'abgleichen') return abgleichFenster();
+  if (a === 'neu-zyklus') return zyklusFenster();
+  if (a === 'zyklus-bearbeiten') { const z = S.zyklen.find(x => x.id === id); if (z) zyklusFenster(z); return; }
+  if (a === 'monat') { S.monat = el.dataset.m; render(); return; }
+  if (a === 'bereich-auf') { S.offenerBereich = S.offenerBereich === id ? null : id; render(); return; }
+  if (a === 'erwartet') { S.mitErwartet = !S.mitErwartet; render(); return; }
+  if (a === 'schliessen') return schliesse();
+  if (a === 'loeschen-frage') { el.outerHTML = `<span class="btn-row"><span class="small danger" style="align-self:center">Wirklich löschen?</span><button type="button" class="btn danger-btn" data-a="loeschen-ja">Ja, löschen</button></span>`; return; }
+  if (a === 'loeschen-ja') { el.disabled = true; return loeschen($('#sheet')?.dataset.loeschen); }
+  if (a === 'wochenbudget') {
+    const v = parseEuro($('#wochenbudget').value);
+    if (!(v >= 0)) return toast('Bitte einen Betrag eintragen, z. B. 150.');
+    $('#wochenbudget').blur(); await einstAendern({ wochenbudget: v }, 'Wochenbudget gespeichert'); return;
+  }
+  if (a === 'abschluss-frage') { $('#abschluss-box').innerHTML = `<div class="btn-row" style="justify-content:flex-start"><button class="btn primary" data-a="abschluss-ja">Ja, abschließen</button><button class="btn" data-a="abschluss-nein">Abbrechen</button></div>`; return; }
+  if (a === 'abschluss-nein') return render();
+  if (a === 'abschluss-ja') { el.disabled = true; return zyklusAbschliessen(); }
+  if (a === 'sicherung') return sicherung();
+  if (a === 'tabelle') return tabelle();
+  if (a === 'import-nein') { S.importVorschau = null; render(); return; }
+  if (a === 'import-ja') {
+    el.disabled = true;
+    const ok = await schreiben(async () => S.db.ersetzen(S.importVorschau.karte));
+    S.importVorschau = null;
+    if (ok) { toast('Sicherung eingespielt'); location.hash = '#uebersicht'; } else render();
+    return;
+  }
+});
+document.addEventListener('keydown', ev => {
+  if (ev.key === 'Escape' && !$('#veil').hidden) return schliesse();
+  if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.matches('[role="button"][data-a]')) { ev.preventDefault(); ev.target.click(); }
+});
+const Q_FELD = { 'q-betrag': 'betrag', 'q-titel': 'titel', 'q-bereich': 'bereich', 'q-quelle': 'quelle' };
+document.addEventListener('input', ev => { const f = Q_FELD[ev.target.id]; if (f && ev.target.value !== '__neu') S.schnell[f] = ev.target.value; });
+document.addEventListener('change', async ev => {
+  const el = ev.target;
+  if (el.id === 'q-bereich' && el.value === '__neu') { el.value = S.schnell.bereich; return bereichFenster(null, id => { S.schnell.bereich = id; render(); }); }
+  if (Q_FELD[el.id]) { S.schnell[Q_FELD[el.id]] = el.value; return; }
+  if (el.id === 'q-foto') { const f = el.files && el.files[0]; if (f) bonLesen(f); return; }
+  if (el.id === 'import-datei') {
+    const f = el.files && el.files[0]; if (!f) return;
+    S.importFehler = ''; S.importVorschau = null;
+    try { S.importVorschau = importPruefen(await f.text()); } catch (err) { S.importFehler = typeof err === 'string' ? err : 'Die Datei konnte nicht gelesen werden.'; }
+    render(); return;
+  }
+  if (el.id === 'von-wahl') { lsSet('hb_von', el.value); render(); return; }
+  const a = el.dataset.a;
+  if (a === 'erledigt') { el.disabled = true; await erledigtUmschalten(el.dataset.id, el.checked); return; }
+  if (a === 'spar-ueberwiesen') { await einstAendern({ sparUeberwiesen: el.checked, sparAm: el.checked ? jetztIso() : null }, el.checked ? 'Als überwiesen vermerkt' : 'Zurückgesetzt'); return; }
+  if (a === 'sparbetrag') {
+    const v = parseEuro(el.value); if (!(v >= 0)) { toast('Bitte einen Betrag eintragen, z. B. 500.'); return; }
+    el.blur(); await einstAendern({ sparbetrag: v }, 'Sparbetrag gespeichert'); return;
+  }
+  if (a === 'budget') {
+    const v = parseEuro(el.value); if (!(v >= 0)) { toast('Bitte einen Betrag eintragen.'); return; }
+    const b = bereiche().find(x => x.id === el.dataset.id); el.blur();
+    await schreiben(() => S.db.doc('bereiche/' + el.dataset.id).set({ ...stripMeta(b || {}), budget: v, geaendert: jetztIso() }), 'Budget gespeichert');
+  }
+});
+async function bonLesen() {}
+async function schnellEintragen() {
+  const betrag = parseEuro($('#q-betrag').value);
+  if (!(betrag > 0)) { toast('Bitte einen Betrag eintragen, z. B. 23,40.'); return; }
+  const daten = { art: 'ausgabe', betrag, titel: $('#q-titel').value.trim(), bereich: $('#q-bereich').value || 'sonstiges', quelle: $('#q-quelle').value === 'bar' ? 'bar' : 'konto', datum: S.schnell.datum || heute(), von: vonWahl(), erledigt: true, erledigtAm: jetztIso(), erstellt: jetztIso(), geaendert: jetztIso() };
+  const knopf = $('#schnell button[type="submit"]'); if (knopf) knopf.disabled = true;
+  document.activeElement?.blur();
+  const ok = await schreiben(() => S.db.collection('buchungen').doc().set(daten), `Eingetragen: ${eur(betrag)}`);
+  if (ok) { S.schnell = schnellLeer(); render(); }
+  const k2 = $('#schnell button[type="submit"]'); if (k2) k2.disabled = false;
+}
+document.addEventListener('submit', async ev => {
+  if (ev.target.id === 'schnell') { ev.preventDefault(); return schnellEintragen(); }
+  if (ev.target.id !== 'form-haushalt') return;
+  ev.preventDefault();
+  const von = $('#e-von').value, bis = $('#e-bis').value;
+  if (!von || !bis || bis < von) return toast('Zyklus: „endet“ muss nach „beginnt“ liegen.');
+  const ziel = $('#e-ziel').value.trim() ? parseEuro($('#e-ziel').value) : 0;
+  const vorher = $('#e-vorher').value.trim() ? parseEuro($('#e-vorher').value) : 0;
+  if (!(ziel >= 0) || !(vorher >= 0)) return toast('Bitte Beträge so schreiben: 1234,56');
+  document.activeElement?.blur();
+  await einstAendern({ namen: { p1: $('#e-p1').value.trim() || 'Person 1', p2: $('#e-p2').value.trim() || 'Person 2' }, zyklus: { von, bis }, sparziel: ziel, gespartVorher: vorher }, 'Einstellungen gespeichert');
+});
+document.addEventListener('focusout', () => { setTimeout(() => { if (S.renderOffen && !$('#main').contains(document.activeElement)) render(); }, 0); });
+window.addEventListener('hashchange', () => { render(); window.scrollTo(0, 0); });
+
+/* ───────── Speicher auf diesem Gerät ─────────
+   Gleiche Schnittstelle wie vorher (doc/collection/onSnapshot), aber alles bleibt im Browser. */
+const SPEICHER_KEY = 'haushaltsbuch_v1';
+function lokalerSpeicher() {
+  let daten = {};
+  try { daten = JSON.parse(localStorage.getItem(SPEICHER_KEY) || '{}') || {}; } catch { daten = {}; }
+  const hoerer = new Set();
+  const kopie = v => v == null ? v : JSON.parse(JSON.stringify(v));
+  const melden = () => setTimeout(() => hoerer.forEach(f => f()), 0);
+  function sichern(rueckgaengig) {
+    try { localStorage.setItem(SPEICHER_KEY, JSON.stringify(daten)); }
+    catch (e) { rueckgaengig(); throw { code: 'quota_exceeded' }; }
+    melden();
+  }
+  let zaehler = 0;
+  const neueId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8) + (zaehler++).toString(36);
+  const snapDoc = p => ({ id: p.split('/').pop(), exists: p in daten, data: () => kopie(daten[p]) });
+  const doc = p => ({
+    id: p.split('/').pop(), path: p,
+    get: async () => snapDoc(p),
+    set: async d => { const alt = daten[p]; daten[p] = kopie(d); sichern(() => { if (alt === undefined) delete daten[p]; else daten[p] = alt; }); },
+    update: async d => { if (!(p in daten)) throw { code: 'invalid_argument' }; const alt = daten[p]; daten[p] = { ...alt, ...kopie(d) }; sichern(() => { daten[p] = alt; }); },
+    delete: async () => { if (!(p in daten)) return; const alt = daten[p]; delete daten[p]; sichern(() => { daten[p] = alt; }); },
+    onSnapshot: next => { const f = () => next(snapDoc(p)); hoerer.add(f); setTimeout(f, 0); return () => hoerer.delete(f); },
+  });
+  const collection = c => ({
+    path: c,
+    doc: id => doc(c + '/' + (id || neueId())),
+    onSnapshot: next => {
+      const f = () => { const tiefe = c.split('/').length + 1; const docs = Object.keys(daten).filter(k => k.startsWith(c + '/') && k.split('/').length === tiefe).map(snapDoc); next({ docs, size: docs.length, empty: !docs.length }); };
+      hoerer.add(f); setTimeout(f, 0); return () => hoerer.delete(f);
+    },
+  });
+  const ersetzen = async neu => { const alt = daten; daten = kopie(neu); sichern(() => { daten = alt; }); };
+  // Zweiter Tab offen? Dann dort die Änderungen übernehmen.
+  window.addEventListener('storage', e => { if (e.key === SPEICHER_KEY) { try { daten = JSON.parse(e.newValue || '{}') || {}; } catch { daten = {}; } melden(); } });
+  return { doc, collection, ersetzen };
+}
+/* Datei an das Gerät geben: am iPhone über das Teilen-Menü („In Dateien sichern“), sonst als Download */
+const geraetDownloads = {
+  save: async ({ filename, data }) => {
+    const typ = filename.endsWith('.csv') ? 'text/csv;charset=utf-8' : 'application/json';
+    const datei = typeof File === 'function' ? new File([data], filename, { type: typ }) : null;
+    if (datei && navigator.canShare && navigator.canShare({ files: [datei] })) {
+      try { await navigator.share({ files: [datei], title: filename }); return { status: 'saved' }; }
+      catch (e) { if (e && e.name === 'AbortError') throw { code: 'declined' }; }
+    }
+    const url = URL.createObjectURL(new Blob([data], { type: typ }));
+    const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+    return { status: 'saved' };
+  },
+};
+
+/* ───────── Start ───────── */
+render();
+(() => {
+  let db = null;
+  try { localStorage.setItem('hb_probe', '1'); localStorage.removeItem('hb_probe'); db = lokalerSpeicher(); } catch { db = null; }
+  S.downloads = geraetDownloads; S.kannSchreiben = true;
+  if (!db) { S.verfuegbar = false; S.nurLesen = true; Object.keys(S.geladen).forEach(k => S.geladen[k] = true); zeigeSync(); render(); return; }
+  S.db = db; S.verfuegbar = true;
+  zeigeSync();
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+  const liste = snap => snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  db.doc('haushalt/einstellungen').onSnapshot(s => { S.einst = s.exists ? s.data() : null; S.geladen.einst = true; render(); });
+  db.collection('buchungen').onSnapshot(s => { S.buchungen = liste(s).filter(b => b.datum); S.geladen.buchungen = true; render(); });
+  db.collection('fixkosten').onSnapshot(s => { S.fix = liste(s); S.geladen.fix = true; render(); });
+  db.collection('bereiche').onSnapshot(s => { S.bereiche = liste(s); S.geladen.bereiche = true; render(); });
+  db.collection('zyklen').onSnapshot(s => { S.zyklen = liste(s); S.geladen.zyklen = true; render(); });
+  if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+})();
+</script>
+</body>
+</html>
