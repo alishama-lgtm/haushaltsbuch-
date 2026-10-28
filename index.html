@@ -480,7 +480,7 @@ function name(p) { return einst().namen[p] || ''; }
 
 function render() {
   const main = $('#main');
-  if (main.contains(document.activeElement) && document.activeElement.matches('input:not([type="checkbox"]),select')) { S.renderOffen = true; return; }
+  if (main.contains(document.activeElement) && document.activeElement.matches('input:not([type="checkbox"]),select,textarea')) { S.renderOffen = true; return; }
   S.renderOffen = false;
   const E = einst();
   $('#paar').textContent = `${E.namen.p1} & ${E.namen.p2}`;
@@ -822,7 +822,9 @@ function einstellungen(R, kopf) {
     <h3 style="padding-top:6px">Sicherung einspielen</h3>
     <p class="small muted">Holt alle Daten aus einer Sicherungs-Datei auf dieses Gerät, zum Beispiel vom alten Haushaltsbuch. <b>Ersetzt</b> alles, was jetzt hier steht.</p>
     ${S.importVorschau ? `<div class="banner info"><b>In der Datei:</b> ${S.importVorschau.text}<div class="btn-row" style="justify-content:flex-start;padding-top:10px"><button class="btn primary" data-a="import-ja">Jetzt einspielen</button><button class="btn" data-a="import-nein">Abbrechen</button></div></div>`
-      : `<div><label class="btn foto-btn" for="import-datei">Datei auswählen …</label><input type="file" id="import-datei" class="vh" accept=".json,application/json,text/plain"></div>`}
+      : `<div><label class="btn foto-btn" for="import-datei">Datei auswählen …</label><input type="file" id="import-datei" class="vh" accept=".json,application/json,text/plain"></div>
+        <label class="f" for="import-text" style="padding-top:6px">Oder den Sicherungs-Text hier einfügen (lange tippen → Einsetzen)<textarea id="import-text" rows="4" style="font:inherit;font-size:15px;color:var(--ink);background:var(--sunk);border:1px solid var(--line);border-radius:12px;padding:12px 14px;width:100%;resize:vertical" placeholder="{ &quot;einstellungen&quot;: … }"></textarea></label>
+        <div><button class="btn" data-a="import-text">Text prüfen</button></div>`}
     ${S.importFehler ? `<p class="small danger">${esc(S.importFehler)}</p>` : ''}</div>`;
 }
 function naechstesEnde(E) {
@@ -1124,6 +1126,15 @@ document.addEventListener('click', async ev => {
   if (a === 'sicherung') return sicherung();
   if (a === 'tabelle') return tabelle();
   if (a === 'import-nein') { S.importVorschau = null; render(); return; }
+  if (a === 'import-text') {
+    const roh = ($('#import-text') && $('#import-text').value) || '';
+    const von = roh.indexOf('{'), bis = roh.lastIndexOf('}');
+    S.importFehler = ''; S.importVorschau = null;
+    if (von < 0 || bis <= von) S.importFehler = 'Kein Sicherungs-Text gefunden. Bitte den ganzen Text einfügen.';
+    else { try { S.importVorschau = importPruefen(roh.slice(von, bis + 1)); } catch (err) { S.importFehler = typeof err === 'string' ? err : 'Der Text konnte nicht gelesen werden.'; } }
+    document.activeElement && document.activeElement.blur && document.activeElement.blur();
+    render(); return;
+  }
   if (a === 'import-ja') {
     el.disabled = true;
     const ok = await schreiben(async () => S.db.ersetzen(S.importVorschau.karte));
