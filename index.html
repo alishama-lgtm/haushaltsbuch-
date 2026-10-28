@@ -222,7 +222,7 @@ details.how .kv { font-size: 15px; }
     <div class="card"><h3>Haushaltsbuch wird geladen …</h3><p class="muted">Hier erscheinen gleich eure Zahlungen, Einnahmen, Budgets und der Monatsplan.</p>
       <noscript><div class="banner">JavaScript ist ausgeschaltet. Bitte die Seite in Safari oder Chrome öffnen.</div></noscript></div>
   </main>
-  <footer class="foot"><span>Gespeichert nur auf diesem Gerät</span><span id="gespeichert">—</span></footer>
+  <footer class="foot"><span>Gespeichert nur auf diesem Gerät · Version 3</span><span id="gespeichert">—</span></footer>
 </div>
 <div id="veil" class="veil" hidden></div>
 <div id="toast" class="toast" hidden></div>
@@ -821,7 +821,7 @@ function einstellungen(R, kopf) {
     ${E.letzteSicherung ? `<p class="small muted">Letzte Sicherung: ${zeitpunkt(E.letzteSicherung)}</p>` : '<p class="small warn-text">Noch keine Sicherung heruntergeladen.</p>'}
     <h3 style="padding-top:6px">Sicherung einspielen</h3>
     <p class="small muted">Holt alle Daten aus einer Sicherungs-Datei auf dieses Gerät, zum Beispiel vom alten Haushaltsbuch. <b>Ersetzt</b> alles, was jetzt hier steht.</p>
-    ${S.importVorschau ? `<div class="banner info"><b>In der Datei:</b> ${S.importVorschau.text}<div class="btn-row" style="justify-content:flex-start;padding-top:10px"><button class="btn primary" data-a="import-ja">Jetzt einspielen</button><button class="btn" data-a="import-nein">Abbrechen</button></div></div>`
+    ${S.importVorschau ? `<div class="banner ${S.importVorschau.leer ? '' : 'info'}"><b>In der Datei:</b> ${S.importVorschau.text}${S.importVorschau.leer ? '<br><b>Diese Sicherung ist leer.</b> Das ist wahrscheinlich die falsche Datei, zum Beispiel eine Sicherung, die in dieser neuen App gemacht wurde, bevor die Daten drin waren. Bitte „Abbrechen“.' : ''}<div class="btn-row" style="justify-content:flex-start;padding-top:10px"><button class="btn primary" data-a="import-ja">Jetzt einspielen</button><button class="btn" data-a="import-nein">Abbrechen</button></div></div>`
       : `<div><label class="btn foto-btn" for="import-datei">Datei auswählen …</label><input type="file" id="import-datei" class="vh" accept=".json,application/json,text/plain"></div>
         <label class="f" for="import-text" style="padding-top:6px">Oder den Sicherungs-Text hier einfügen (lange tippen → Einsetzen)<textarea id="import-text" rows="4" style="font:inherit;font-size:15px;color:var(--ink);background:var(--sunk);border:1px solid var(--line);border-radius:12px;padding:12px 14px;width:100%;resize:vertical" placeholder="{ &quot;einstellungen&quot;: … }"></textarea></label>
         <div><button class="btn" data-a="import-text">Text prüfen</button></div>`}
@@ -1055,7 +1055,12 @@ async function tabelle() {
   catch (e) { if (e?.code !== 'declined') toast('Herunterladen hat nicht geklappt.'); }
 }
 function importPruefen(inhalt) {
-  let d; try { d = JSON.parse(inhalt); } catch { throw 'Die Datei ist keine Sicherung (kein gültiges Format).'; }
+  let d;
+  try { d = JSON.parse(inhalt); }
+  catch {
+    const von = inhalt.indexOf('{'), bis = inhalt.lastIndexOf('}');
+    try { d = JSON.parse(inhalt.slice(von, bis + 1)); } catch { throw 'kein-format'; }
+  }
   if (!d || typeof d !== 'object' || !Array.isArray(d.buchungen)) throw 'In der Datei sind keine Buchungen. Ist das die richtige Sicherung?';
   const karte = {}; let uebersprungen = 0;
   const idOk = id => typeof id === 'string' && /^[A-Za-z0-9_\-.~:@+]{1,200}$/.test(id) && id !== '.' && id !== '..';
@@ -1074,7 +1079,8 @@ function importPruefen(inhalt) {
     + (e.namen ? ` · ${esc(e.namen.p1 || '')} &amp; ${esc(e.namen.p2 || '')}` : '')
     + (e.zyklus && e.zyklus.von && e.zyklus.bis ? ` · Zyklus ${tm(e.zyklus.von)} – ${tmj(e.zyklus.bis)}` : '')
     + (uebersprungen ? ` · ${uebersprungen} unlesbare Einträge werden ausgelassen` : '') + '.';
-  return { karte, text };
+  const leer = !n('buchungen') && !n('fixkosten');
+  return { karte, text, leer };
 }
 async function loeschen(ziel) {
   if (!ziel) return;
@@ -1131,7 +1137,7 @@ document.addEventListener('click', async ev => {
     const von = roh.indexOf('{'), bis = roh.lastIndexOf('}');
     S.importFehler = ''; S.importVorschau = null;
     if (von < 0 || bis <= von) S.importFehler = 'Kein Sicherungs-Text gefunden. Bitte den ganzen Text einfügen.';
-    else { try { S.importVorschau = importPruefen(roh.slice(von, bis + 1)); } catch (err) { S.importFehler = typeof err === 'string' ? err : 'Der Text konnte nicht gelesen werden.'; } }
+    else { try { S.importVorschau = importPruefen(roh.slice(von, bis + 1)); } catch (err) { S.importFehler = err === 'kein-format' ? 'Der Text ist unvollständig. Bitte den ganzen Text kopieren und nochmal einfügen.' : typeof err === 'string' ? err : 'Der Text konnte nicht gelesen werden.'; } }
     document.activeElement && document.activeElement.blur && document.activeElement.blur();
     render(); return;
   }
@@ -1157,7 +1163,8 @@ document.addEventListener('change', async ev => {
   if (el.id === 'import-datei') {
     const f = el.files && el.files[0]; if (!f) return;
     S.importFehler = ''; S.importVorschau = null;
-    try { S.importVorschau = importPruefen(await f.text()); } catch (err) { S.importFehler = typeof err === 'string' ? err : 'Die Datei konnte nicht gelesen werden.'; }
+    try { S.importVorschau = importPruefen(await f.text()); }
+    catch (err) { S.importFehler = err === 'kein-format' ? `Die Datei „${f.name}“ ist keine Sicherung. Gesucht ist eine Datei, die mit „haushaltsbuch“ beginnt und auf „.json“ endet. Oder unten den Sicherungs-Text einfügen.` : typeof err === 'string' ? err : 'Die Datei konnte nicht gelesen werden.'; }
     render(); return;
   }
   if (el.id === 'von-wahl') { lsSet('hb_von', el.value); render(); return; }
